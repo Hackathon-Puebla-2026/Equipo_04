@@ -13,6 +13,9 @@ The repo is in an early/setup stage: it contains the challenge spec (PDF), data-
 - `Ejemplos de ejecuciones.ipynb` — minimal smoke tests for the quantum stack: the same 4-qubit parametric circuit run on PennyLane (`lightning.gpu`), Qiskit Aer (`device="GPU"`), and CUDA Quantum (`nvidia` target). Use these to validate the environment and to fall back to CPU devices (`default.qubit` / `device="CPU"`) when no GPU is present.
 - `FalconChallenge/Descargas.ipynb` — data downloader for challenge points 8 & 9. Pulls IBWC/USIBWC sources into `data/raw/`, scrapes link indexes, and writes a reproducible `data/falcon_download_manifest.json`. Intentionally avoids `beautifulsoup4`/`lxml`/`openpyxl` (uses stdlib `html.parser` + `requests`).
 - `FalconChallenge/FalconChallenge_V6.pdf` — authoritative challenge spec. Read this before changing any math; the formulas and benchmark constants below come from it.
+- `docs/FalconChallenge_V6.md` — markdown transcription of the spec PDF (cheaper to load and greppable). Imported below; the PDF remains the source of truth on any disagreement.
+
+@docs/FalconChallenge_V6.md
 
 ## The optimization problem (from the spec)
 
