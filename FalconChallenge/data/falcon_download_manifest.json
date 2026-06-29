@@ -1,0 +1,66 @@
+{
+  "source_urls": {
+    "ibwc_water_data": "https://www.ibwc.gov/water-data/",
+    "aqwebportal_dashboard": "https://waterdata.ibwc.gov/AQWebportal/Data/Dashboard/5",
+    "sharepoint_benchmark_folder": "https://cicesemx0-my.sharepoint.com/:f:/g/personal/fadomin_cicese_mx/IgDamhhYBeWfSb73hdPj-EmXAWlRxnqXUyBlI0u9GUiJvrM?e=YDLUL0",
+    "daily_rio_grande_flow_conditions": "https://ibwcsftpstg.blob.core.windows.net/wad/DailyReports/flowdata.htm",
+    "weekly_ownership_reports": "https://ibwcsftpstg.blob.core.windows.net/wad/WeeklyReports/storage.htm",
+    "falcon_reservoir_report_image": "https://ibwcsftpstg.blob.core.windows.net/wad/WeeklyReports/falsto.gif",
+    "amistad_falcon_ownership_trends_image": "https://ibwcsftpstg.blob.core.windows.net/wad/WeeklyReports/amfalpct.gif"
+  },
+  "ibwc_station_datasets": [
+    {
+      "station": "08461200",
+      "station_name": "International Falcon Reservoir",
+      "dataset": "Total Storage.Web-Daily-tcm@08461200",
+      "use": "storage time series"
+    },
+    {
+      "station": "08461200",
+      "station_name": "International Falcon Reservoir",
+      "dataset": "Total Storage.Web-Telemetry-tcm@08461200",
+      "use": "near-real-time storage"
+    },
+    {
+      "station": "08461200",
+      "station_name": "International Falcon Reservoir",
+      "dataset": "Reservoir Elevation.Web-Daily-m@08461200",
+      "use": "reservoir elevation"
+    },
+    {
+      "station": "08461200",
+      "station_name": "International Falcon Reservoir",
+      "dataset": "Lake Area.Best Available@08461200",
+      "use": "lake area"
+    },
+    {
+      "station": "08461200",
+      "station_name": "International Falcon Reservoir",
+      "dataset": "Evaporation,accumltd.Daily Evaporation - mm@08461200",
+      "use": "evaporation"
+    },
+    {
+      "station": "08461200",
+      "station_name": "International Falcon Reservoir",
+      "dataset": "Discharge.Total.Change-in-Storage@08461200",
+      "use": "storage change / inferred balance"
+    },
+    {
+      "station": "08461200",
+      "station_name": "International Falcon Reservoir",
+      "dataset": "Percentage.Conservation-Web-Telemetry@08461200",
+      "use": "conservation percentage"
+    },
+    {
+      "station": "08461300",
+      "station_name": "Rio Grande Below Falcon Dam",
+      "dataset": "Discharge.Best Available@08461300",
+      "use": "observed historical release from Falcon Dam"
+    }
+  ],
+  "notes": [
+    "Use Discharge.Best Available@08461300 as observed historical release.",
+    "If discharge is in m3/s, convert it to volume over the selected time step before storage-balance modeling.",
+    "Official benchmark files from SharePoint should not be replaced by optional scaling data."
+  ]
+}

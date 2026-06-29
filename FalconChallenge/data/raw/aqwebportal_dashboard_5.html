@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en" style="font-size:16px;">
+<head>
+    <meta charset="utf-8" />
+    <title>USIBWC Water Data Portal Disclaimer - USIBWC Water Data</title>
+
+        <link href="/AQWebportal/Account/GetFavicon" rel="shortcut icon" type="image/x-icon" />
+
+    <link rel="manifest" href="/AQWebportal/Content/site.manifest">
+    <link rel="apple-touch-icon" href="/AQWebportal/Content/icon.png">
+    <meta name="msapplication-TileColor" content="#fff">
+    <meta name="theme-color" content="#fff">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="stylesheet" href="/AQWebportal/Content/kendo/bundles/aqPortalKendoStyle.min.css?v=4QKZfonssUbKjU7xOQl0L4depp9DFlXfwZiLI58ARH4" />
+
+    
+    
+        <link rel="stylesheet" href="/AQWebportal/bundles/aqPortalContentStyle.min.css?v=i-7RbozKS0bPr__foupxDXqT3r9pMCfjGcD_98oN2qU" />
+        <link rel="stylesheet" href="/AQWebportal/Content/styles/bundles/aqPortalStyle.min.css?v=atGTYisFnygSIhSTvrm4qZgJVBVJVgex8TOSjq5PJ1s" />
+        <script src="/AQWebportal/bundles/aqPortalMin.min.js?v=vUpV0omQeVGH5i3YfuUsS8O5pJz7rhDqicZmPM_9Yc8"></script>
+        <script src="/AQWebportal/bundles/aqPortal.min.js?v=4kgPQ1mFl5pLqkSQFMPVvvBhcKpG4nYhGs1LNz2oAzU"></script>
+        <script src="/AQWebportal/bundles/admin.min.js?v=bkS21ARQtO_ve5-BSxi_uGWpuJbz78EQd0pP2QVHhbw"></script>
+    
+
+    <script type="text/javascript">
+        $(function () {
+            aqPortal.Init();
+            aqPortal.LibraryLocalisation.Init();
+        });
+
+        dojoConfig = {
+            locale: aqPortal.LibraryLocalisation.GetArcGISLocale(),
+            parseOnLoad: false
+        };
+
+        kendo.culture(aqPortal.LibraryLocalisation.GetKendoLocale());
+
+        moment.locale(aqPortal.LibraryLocalisation.GetMomentLocale());
+
+        window.maintenanceTimeFrame = "";
+    </script>
+
+</head>
+<body class="">
+    <div id="baseSiteUrl" class="hidden">/AQWebportal</div>
+    <div id="CurrentViewGroupName" class="hidden">Anonymous</div>
+        <ol class="hidden LineColours" id="DefaultLineColours">
+                <li data-id="0"><input value="#7CB5EC" /></li>
+                <li data-id="1"><input value="#67CC34" /></li>
+                <li data-id="2"><input value="#FF9933" /></li>
+                <li data-id="3"><input value="#333266" /></li>
+                <li data-id="4"><input value="#990600" /></li>
+                <li data-id="5"><input value="#FFCC02" /></li>
+                <li data-id="6"><input value="#0166CC" /></li>
+                <li data-id="7"><input value="#FE3200" /></li>
+                <li data-id="8"><input value="#B4E2FF" /></li>
+                <li data-id="9"><input value="#444444" /></li>
+        </ol>
+        <ol class="hidden MarkerColours" id="DefaultMarkerColours">
+                <li data-id="0"><input value="#7CB5EC" /></li>
+                <li data-id="1"><input value="#67CC34" /></li>
+                <li data-id="2"><input value="#FF9933" /></li>
+                <li data-id="3"><input value="#333266" /></li>
+                <li data-id="4"><input value="#990600" /></li>
+                <li data-id="5"><input value="#FFCC02" /></li>
+                <li data-id="6"><input value="#0166CC" /></li>
+                <li data-id="7"><input value="#FE3200" /></li>
+                <li data-id="8"><input value="#B4E2FF" /></li>
+                <li data-id="9"><input value="#444444" /></li>
+        </ol>
+    <section class="wrapper">
+        <nav role="navigation" aria-label="main" class="navbar navbar-default navbar-top navbar-fixed-top">
+            <div class="navbar-header navbar-header-nonav  navbar-brand-custom " style=background-color:#003F6B>
+    <button style=background-color:#003F6B;color:#f2f2f2 type="button" class="sitenav navbar-toggle collapsed btn btn-sm" data-toggle="collapse" data-target="#main-header-collapse" aria-expanded="false" style="z-index: 1000;">
+        <span class="sr-only">Toggle Site Navigation</span>
+        <span class="material-icons close">close</span>
+        <span class="material-icons navbar-toggle-icon">account_circle</span>
+    </button>
+        <div style="width: 10px; height: 20px; float: left;" class="mobile"></div>
+
+    <a class="navbar-brand" href=/AQWebportal>
+        <span class="sr-only">Aquatic Informatics Web Site</span>
+            <div class="brand-logo-customer">
+                <img src="/AQWebportal/Account/GetLogo" alt="AQUARIUS WebPortal"/>
+            </div>
+    </a>
+</div>
+<div class="nav-wrapper" style=background-color:#003F6B>
+        <div class="navbar-title">
+            <h1 style=color:#f2f2f2></h1>
+        </div>
+        <div class="navbar-alert">
+            
+        </div>
+
+    <ul class="nav navbar-nav hidden-xs">
+        <li> <a href="#" class="btn toggle-aside" data-toggle="aside"><span class="sr-only">Hide/Expand Tabbed Navigation</span> <em class="fa"></em> </a> </li>
+    </ul>
+    <div class="desktop">
+        <div class="collapse navbar-collapse">
+            <ul class="nav navbar-nav navbar-right" style=background-color:#003F6B>
+                    <!-- #region Data -->
+                        <li>
+                            <a style=color:#f2f2f2 href="/AQWebportal/Data">
+                                <span class="material-icons" data-toggle="tooltip" data-placement="bottom" title="Data">assessment</span>
+                            </a>
+                        </li>
+                    <!-- #endregion -->
+                    <!-- #region Help -->
+                                <li>
+                                    <a style=color:#f2f2f2 href="/AQWebportal/Content/Manuals/en/UserGuide.pdf" target="_blank"><span class="material-icons" data-toggle="tooltip" data-placement="bottom" title="Help">help</span></a>
+                                </li>
+                    <!-- #endregion -->
+                    <!-- #region Admin and View Group -->
+                    <!-- #endregion -->
+                    <!-- #region Language -->
+                            <li class="dropdown">
+                                <button style=color:#f2f2f2 data-toggle="dropdown" class="dropdown-toggle">
+                                    <span class="material-icons" data-toggle="tooltip" data-placement="bottom" title="Language">language</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-right languageSelector">
+                                        <li data-language="en" class="active">
+                                            <button onclick="aqPortal.setLocale('en')"> English</button>
+                                        </li>
+                                        <li data-language="de" class="">
+                                            <button onclick="aqPortal.setLocale('de')"> Deutsch</button>
+                                        </li>
+                                        <li data-language="es-AR" class="">
+                                            <button onclick="aqPortal.setLocale('es-AR')"> Espa&#xF1;ol</button>
+                                        </li>
+                                        <li data-language="fr" class="">
+                                            <button onclick="aqPortal.setLocale('fr')"> Fran&#xE7;ais</button>
+                                        </li>
+                                </ul>
+                            </li>
+                    <!-- #endregion -->
+                    <!-- #region Account -->
+                            <li class=" right-end-menu-item">
+                                <a style=color:#f2f2f2 href="/AQWebportal/Account/SignIn">
+                                    <span class="material-icons" data-toggle="tooltip" data-placement="bottom" title="Sign in">account_circle</span>&nbsp;Sign in
+                                </a>
+                            </li>
+                    <!-- #endregion -->
+                    <!-- #region Apps -->
+                    <!-- #endregion -->
+            </ul>
+        </div>
+    </div>
+
+    <div class="mobile">
+        <div class="collapse navbar-collapse" id="main-header-collapse">
+            <ul class="nav navbar-nav navbar-right">
+                    <!-- #region Data -->
+                        <li>
+                            <a href="/AQWebportal/Data"><span class="material-icons mobile-item">assessment</span>Data</a>
+                        </li>
+                    <li class="divider"></li>
+                    <!-- #endregion -->
+                    <!-- #region Account -->
+                    <!-- #endregion -->
+                    <!-- #region Admin settings -->
+                    <!-- #endregion -->
+                    <!-- #region View Group -->
+                    <!-- #endregion -->
+                    <!-- #region Apps -->
+                    <!-- #endregion -->
+                    <!-- #region Authenticate -->
+                            <li class="">
+                                <a href="/AQWebportal/Account/SignIn"> <span class="material-icons mobile-item">login</span>Sign in</a>
+                            </li>
+                        <li class="divider"></li>
+                    <!-- #endregion -->
+                    <!-- #region Language -->
+                        <li class="dropdown">
+                            <button class ="dropdown-toggle" id="languageSelectorMobile" data-toggle="dropdown">
+                                <span class="dropdown-left">
+                                    <span class="material-icons mobile-item">language</span>
+                                 English
+                                 </span>
+                                <div class="expand"><span class="material-icons pull-right">expand_more</span></div>
+                            </button>
+
+                            <ul class="dropdown-menu languageSelectorMobile" role="menu">
+                                    <li class="dictionary-item dropdown-item-checked" data-language="en" data-content="English">
+                                        <button class="dropdown-item" onclick="aqPortal.setLocale('en')">English</button>
+                                    </li>
+                                    <li class="dictionary-item " data-language="de" data-content="Deutsch">
+                                        <button class="dropdown-item" onclick="aqPortal.setLocale('de')">Deutsch</button>
+                                    </li>
+                                    <li class="dictionary-item " data-language="es-AR" data-content="Espa&#xF1;ol">
+                                        <button class="dropdown-item" onclick="aqPortal.setLocale('es-AR')">Espa&#xF1;ol</button>
+                                    </li>
+                                    <li class="dictionary-item " data-language="fr" data-content="Fran&#xE7;ais">
+                                        <button class="dropdown-item" onclick="aqPortal.setLocale('fr')">Fran&#xE7;ais</button>
+                                    </li>
+                            </ul>
+                        </li>
+                            <li class="divider"></li>
+                    <!-- #endregion -->
+
+                <!-- #region Help -->
+                    <li>
+                        <a href="/AQWebportal/Content/Manuals/en/UserGuide.pdf" target="_blank" title="User guide">
+                            <span class="material-icons mobile-item">info</span><span class="visible-xs">User guide</span>
+                        </a>
+                    </li>
+                <!-- #endregion -->
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(function() {
+        aqPortal.FloodingSetup.InitAdminAndFloodSettings();
+    });
+</script>
+
+        </nav>
+            <div id="largedialog" class="modal fade" tabindex="-1" aria-labelledby="Modal" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+<form action="/AQWebportal/AcceptDisclaimer" method="post">                    <input type="hidden" name="returnUrl" value="/AQWebportal/Data/Dashboard/5"/>
+                    <input type="hidden"/>
+                <div class="modal-header">
+                    <h2 class="modal-title">USIBWC Water Data Portal Disclaimer</h2>
+                </div>
+                <div class="modal-body">
+                    <br><img src="https://www.ibwc.gov/wp-content/uploads/2022/09/Logo-Transparent.png" alt="IBWC Logo" width="100" height="98" align="middle">
+<h2>Welcome to the USIBWC Water Data Portal</h2>
+This interactive website provides an interface for agency water data within the Rio Grande, Colorado, and Tijuana River Basins. This portal serves as the primary public access point for accessing agency water records as well as a view of current river conditions along the border region.
+<br><br>
+ <u>Data Usage Disclaimer:</u> Data are being provided with the understanding they are provisional and subject to future revision. Provisional data may be inaccurate due to instrument malfunctions or physical changes at the measurement site. Subsequent review based on field inspections and measurements may result in significant revisions to the data. Not all datasets have received subsequent review and approval, and thus may contain errors. Data users are cautioned to consider carefully the provisional nature of the information before using it for decisions that concern personal or public safety or the conduct of business that involves substantial monetary or operational consequences. USIBWC does not warrant that these data are accurate or appropriate for any particular use case and advises that they may contain error as they are provisional in nature. USIBWC is not liable for the accuracy of these data or the use of these data for any purpose. Additional information regarding these datasets can be obtained from the USIBWC. <br><br><u>General Disclaimer:</u> By accessing this computer system you are consenting to system monitoring for law enforcement and other purposes. Unauthorized use of, or access to, this computer system may subject you to criminal prosecution and penalties. The information, opinions, data, and statements contained herein are not necessarily those of the U.S. Government, the USIBWC, its sponsors, employees, contractors or affiliates and should not be interpreted, acted on or represented as such. References on this site to any specific commercial product, process, or service, or the use of any trade, firm, or corporation names is only for the information and convenience of the public, and does not constitute endorsement, recommendation, or favoring by the U.S. Government, the USIBWC, any of its employees, sponsors, contractors or affiliates.<br> <br>
+
+
+<b>Please refer to the <a href="https://www.ibwc.gov/privacy-policy/" target="_blank">USIBWC Privacy Policy</a> for conditions regarding the use of this website or the <a href="https://www.ibwc.gov/" target="_blank">USIBWC Homepage</a> for additional information.</b> or contact the <a style="color: rgba(5, 130, 240, 1); font-weight: bold" href="mailto:WA-Data@ibwc.gov?Subject=IBWC%20Water%20Data%20Portal%20Inquiry"> <u>USIBWC Water Accounting Division</u></a>.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn ai-action-button">Accept</button>
+
+                        <button type="button" class="btn btn-default">Reject</button>
+                </div>
+<input name="__RequestVerificationToken" type="hidden" value="CfDJ8NIE318bXYBPuRABg_owxz6lfF1KnDKnG-v4eQmE-84_iCJFD72Ouzz9ueOX3aw201RaqmMJamEN6sCzUZFHv6dCZ0llLIy72e0nNtJwG9owcRMo-yJTaC_htAp8H2e751ugY35ISH3Zet-IIKoUtc4" /></form>            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $(function() {
+            //Use a 'WebPortal.Pages' Global Setting group with a 'Disclaimer' key to display a disclaimer on startup.
+;
+
+            aqPortal.Disclaimer(
+                function () { $("form").submit(); },
+                function () { window.location.href = 'https://www.ibwc.gov'}
+            );
+        });
+    </script>
+
+        <div id="menuDialog" class="modal-backdrop fade underHeader" style="display: none;"></div>
+    </section>
+    <div id="widgetDialog" class="largeModal modal fade" tabindex="-1" aria-labelledby="Modal" data-backdrop="static" data-keyboard="false" role="dialog"></div>
+    <div id="formDialog" class="largeModal modal fade" tabindex="-1" aria-labelledby="Modal" data-keyboard="false" role="dialog"></div>
+    <div id="datasetChartDialog" class="modal fade largeModal" tabindex="-1" aria-labelledby="Modal" data-keyboard="false" data-changed="false" data-msg="Changes have been made to the current Chart. Are you sure you want to clear those changes?" data-delete="Are you sure you want to delete this Chart?" role="dialog"></div>
+    <div id="chartDialog" class="modal fade largeModal" tabindex="-1" aria-labelledby="Modal" data-keyboard="false" data-changed="false" data-msg="Changes have been made to the current Chart. Are you sure you want to clear those changes?" data-delete="Are you sure you want to delete this Chart?" role="dialog"></div>
+    <div id="notificationDialog" class="modal fade" tabindex="-1" aria-labelledby="Modal" data-backdrop="static" data-keyboard="false" role="dialog"></div>
+
+
+    <div id="LocalisedText" class="hidden" aria-hidden="true">
+    <div class="UnexpectedError">An unexpected error has occurred.</div>
+    <div class="LoadError">Error loading content, please refresh and try again. If the error is persistent, please contact your WebPortal Administrator.</div>
+    <div class="AutoCompleteResults">Displaying TOTAL of EXTRA</div>
+    <div class="AutoCompleteNoResults">No results found</div>
+    <div class="SearchLocation">Search for a Location</div>
+    <div class="SearchPerson">Search for a Person</div>
+    <div class="None">None</div>
+    <div class="Close">Close</div>
+    <div class="Error">Error</div>
+    <div class="OK">OK</div>
+    <div class="Cancel">Cancel</div>
+    <div class="Apply">Apply</div>
+    <div class="DataSets">Data Sets</div>
+    <div class="DataSet">Data Set</div>
+    <div class="Location">Location</div>
+    <div class="Custom">Custom Range</div>
+    <div class="True">True</div>
+    <div class="False">False</div>
+    <div class="NA">N/A</div>
+    <div class="AlertMessage">Message</div>
+    <div class="Data">Data</div>
+    <div class="SelectData">Select Data</div>
+    <div class="Percentile">Percentile</div>
+    <div class="Seasonal">Seasonal</div>
+    <div class="Latest">Latest Data</div>
+    <div class="Date">Date</div>
+    <div class="Undo">Undo</div>
+    <div class="And">and</div>
+    <div class="ChangesMade">Changes Made</div>
+    <div class="FieldRequired">This field is required.</div>
+    <div class="SuccessfullySavedExportTemplate">Successfully saved the Export Template.</div>
+    <div class="AtleastOneDataset">At least one Data Set must be added to the Export.</div>
+    <div class="HiddenDatasets">The COUNT selected Data Sets have been hidden. </div>
+    <div class="1HiddenDataset">The 1 selected Data Set has been hidden. </div>
+    <div class="ClickToDisplay">Click here to display them.</div>
+    <div class="CollapsePanel">Collapse Panel</div>
+    <div class="ToggleLegend">Toggle Legend</div>
+    <div class="Toggle">Toggle</div>
+    <div class="Global">Global</div>
+    <div class="ViewGroup">View Group</div>
+    <div class="User">User</div>
+    <div class="SelectValue">Select Value</div>
+
+    <div class="SelectNoResults">Nothing selected</div>
+    <div class="SelectItemsSelected">Items selected: {0}</div>
+    <div class="SelectAll">Select All</div>
+    <div class="DeselectAll">Deselect All</div>
+    <div class="AllData">All Data</div>
+
+    <div class="Filter">Filter</div>
+    <div class="Filters">Filters</div>
+    <div class="SavedFilter">Successfully saved the Filter.</div>
+    <div class="FilterLoadFail">An unexpected error has occurred: Unable to load the selected Filter.</div>
+    <div class="UnexpectedErrorFilters">An unexpected error has occurred: Unable to retrieve the Filters list.</div>
+    <div class="SaveFilterValidationError">Validation errors saving filter:<br /></div>
+    <div class="SaveFilterError">An unspecified error occurred trying to save the Filter.</div>
+    <div class="NoFilter">You must add at least one Filter before trying to save.</div>
+    <div class="LocationCount">1 Location</div>
+    <div class="LocationsCount">COUNT Locations</div>
+    <div class="DataSetCount">1 Data Set</div>
+    <div class="DataSetsCount">COUNT Data Sets</div>
+    <div class="ClearFilter">Clear 1 Filter</div>
+    <div class="ClearFilters">Clear COUNT Filters</div>
+    <div class="MapPOLYGON">Polygon</div>
+    <div class="MapCIRCLE">Circle</div>
+    <div class="MapRECTANGLE">Rectangle</div>
+    <div class="MapSelectionFailed">An error occured trying to filter the map by the spatial selection.</div>
+    <div class="NormalizeMapSelectionFailed">An error occured trying to filter the map by the spatial selection.<br><br>Note: It is not possible to filter by a spatial selection that crosses the International Date Line.</div>
+    <div class="CanBeShared">Can be shared with everyone</div>
+    <div class="CanBeVGShared">Can be shared with members of the 'VIEWGROUP' View Group</div>
+    <div class="CannotBeShared">Cannot be shared - only visible to you</div>
+    <div class="SelectAParameter">Select a Parameter to enable Data Set Attribute Filters</div>
+    <div class="AllValues">All values:</div>
+    <div class="AnyValue">Any value:</div>
+    <div class="AnyValueGlobal">Any value in any tag list:</div>
+    <div class="Remove">Remove</div>
+
+    <div class="ParameterChangeWithSeasonalChart">The selected Parameter has no reference periods, and will switch to a Periodic interval, clearing the current Chart. Are you sure you want to proceed?</div>
+    <div class="AlertResetData">Unable to reset the data, grid was not found.</div>
+    <div class="UnexpectedErrorCharts">An unexpected error has occurred: Unable to retrieve the Charts list.</div>
+    <div class="UnexpectedErrorFilterData">An unexpected error has occurred: Unable to retrieve the Filter Data dialog.</div>
+    <div class="Today">Today</div>
+    <div class="Week">Last 7 Days</div>
+    <div class="Month">Last 30 Days</div>
+    <div class="6Month">6 Months</div>
+    <div class="1Year">1 Year</div>
+
+    <div class="From">From</div>
+    <div class="To">to</div>
+    <div class="Days">Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday</div>
+    <div class="DaysShort">Su,Mo,Tu,We,Th,Fr,Sa</div>
+    <div class="Months">January,February,March,April,May,June,July,August,September,October,November,December</div>
+    <div class="MonthsShort">Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec</div>
+    <div class="CurrentDate">Current Date</div>
+    <div class="ClearDate">Clear Date</div>
+    <div class="CurrentMonth">Current Month</div>
+    <div class="CurrentYear">Current Year</div>
+    <div class="CurrentDecade">Current Decade</div>
+    <div class="CurrentCentury">Current Century</div>
+
+    <div class="PleaseConfirm">Please confirm</div>
+    <div class="NotifyNoMessage">Notify: No message specified</div>
+    <div class="ExportError">An unexpected error has occurred: Export failed. Please try again later.</div>
+    <div class="ExportSaveError">An unexpected error has occurred: Failed to Save the Export Template. Please try again later.</div>
+    <div class="ApiUrlTooLong">Export API URL would exceed maximum URL length.</div>
+    <div class="ExportFormInvalid">Selected export options are incomplete or contain errors.</div>
+    <div class="MaintenanceMessage">AQUARIUS WebPortal will undergo scheduled maintenance from STARTDATE to ENDDATE (UTCOFFSET)</div>
+
+    <div class="Loading">Loading</div>
+    <div class="NoChartData">There is no Data to display for the selected Date, Zoom Level or Approval Level</div>
+    <div class="ChartError">An unexpected error has occurred: Please try refreshing the Chart data.</div>
+    <div class="AxisNameUnique">The Axis Name must be unique.</div>
+    <div class="Less">Less</div>
+    <div class="More">More</div>
+    <div class="SuccessfullySavedChart">Successfully saved the Chart.</div>
+    <div class="NoneAvailable">None Available at Location</div>
+    <div class="NoneForParameter">None Available for this Parameter</div>
+    <div class="Grade">Grade</div>
+    <div class="Approval">Approval</div>
+    <div class="Approvals">Approvals</div>
+    <div class="Qualifier">Qualifier</div>
+    <div class="Qualifiers">Qualifiers</div>
+    <div class="ShowOnChart">To Chart</div>
+    <div class="TooManyDataSets">Too Many Data Sets Selected</div>
+    <div class="SendAllDataSets">Send all Data Sets</div>
+    <div class="TooManyDataSetsWarn">TOTAL Data Sets have been selected to display on a Chart. Are you sure you want to continue to the Chart? </div>
+    <div class="TooManyDataSetsExportWarn">TOTAL Data Sets have been selected to export. Are you sure you want to continue? </div>
+    <div class="TooManyDataSetsExportInlineWarn">TOTAL Data Sets have been selected to export. Exporting a large number of Data Sets may take some time.</div>
+    <div class="TooManyDataSetsExportInlineError">Too Many Data Sets Selected to Export. No more than TOTAL can be exported at once.</div>
+    <div class="Now">Now</div>
+    <div class="FieldVisitAdded">Field Visits added</div>
+
+    <div class="NoResults">No Results</div>
+    <div class="EmptySchematicQuery">The Schematic query returned no results</div>
+    <div class="FailedSchematicQuery">An unexpected error has occurred: Unable to load the Schematic data</div>
+
+    <div class="MapNotSpecified">An unexpected error has occurred: Map settings not specified.</div>
+    <div class="MapParseError">An unexpected error has occurred: Map settings failed to parse.</div>
+    <div class="NoMapGroupsLayers">An unexpected error has occurred: No map/layer groups specified.</div>
+    <div class="NoMapGroups">An unexpected error has occurred: No map groups specified.</div>
+    <div class="NoSettingsMapGroups">An unexpected error has occurred: Map settings not specified and there are no map groups or layers.</div>
+    <div class="LayerTypeNotSupported">An unexpected error has occurred: Layer type: TYPE not supported.</div>
+    <div class="PopupDataError">Unable to load popup data for {LOCATION}.</div>
+    <div class="SelectBaseMap">Select a Base Map</div>
+    <div class="MapSelectionFilter">Filter by map selection</div>
+    <div class="Switch3D">Switch to 3D</div>
+    <div class="Switch2D">Switch to 2D</div>
+    <div class="ClusterCount">This aggregation represents {cluster_count} Locations.</div>
+    <div class="RelatedDataSet">Related Data Set</div>
+    <div class="LocationNotOnMap">The Location you have searched for is not currently visible on the map.<br />To show the Location on the map, try removing any filters or switching to Parameters 'None'.</div>
+    <div class="ShapeRadius">Radius:</div>
+    <div class="ShapeRadiusKilometers">km</div>
+    <div class="ShapeRadiusMiles">miles</div>
+
+    <div class="Unlimited">Unlimited</div>
+
+    <div class="EnterUsername">Enter the username of the TYPE Account</div>
+    <div class="AccountLinked">WebPortal account linked to TYPE Account:</div>
+    <div class="AreYouSureRemove">Are you sure you want to remove the Link to this TYPE Account?</div>
+
+    <div class="UnspecifiedError">An unexpected error has occurred: Unable to load the Status Message</div>
+    <div class="Secs">secs</div>
+
+    <div class="DefineAlertMessage">Define a 'Trigger Function' and 'Alert Trigger - Message Definition' to test the trigger.</div>
+    <div class="SelectGlobalSetting">Please select a Global Setting group first</div>
+    <div class="MicrosoftAzure">Microsoft Azure</div>
+
+    <div class="StopSyncing">Are you sure you want to stop synchronising this item?</div>
+
+    <div>Average</div>
+    <div>Minimum</div>
+    <div>Maximum</div>
+    <div>Value at End of Interval</div>
+    <div>Total</div>
+    <div>Average Rate</div>
+
+    <div>Flooding Level</div>
+    <div>Intensity</div>
+    <div class="FloodingPublishSuccessful">Successfully published the flood monitoring setup.</div>
+</div>
+
+    <div id="bdialog" class="modal fade" tabindex="-1" aria-labelledby="Modal">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title"></h4>
+            </div>
+            <div class="modal-body">
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn ai-action-button">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+    
+</body>
+</html>
