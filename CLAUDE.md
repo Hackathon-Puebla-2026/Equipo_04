@@ -14,8 +14,10 @@ The repo is in an early/setup stage: it contains the challenge spec (PDF), data-
 - `FalconChallenge/Descargas.ipynb` — data downloader for challenge points 8 & 9. Pulls IBWC/USIBWC sources into `data/raw/`, scrapes link indexes, and writes a reproducible `data/falcon_download_manifest.json`. Intentionally avoids `beautifulsoup4`/`lxml`/`openpyxl` (uses stdlib `html.parser` + `requests`).
 - `FalconChallenge/FalconChallenge_V6.pdf` — authoritative challenge spec. Read this before changing any math; the formulas and benchmark constants below come from it.
 - `docs/FalconChallenge_V6.md` — markdown transcription of the spec PDF (cheaper to load and greppable). Imported below; the PDF remains the source of truth on any disagreement.
+- `docs/GUIDELINES.md` — team collaboration guidelines: frozen `FalconChallenge/`, per-person folder ownership, where shared code lives, results/data conventions. Imported below; follow it when creating or placing files.
 
 @docs/FalconChallenge_V6.md
+@docs/GUIDELINES.md
 
 ## The optimization problem (from the spec)
 

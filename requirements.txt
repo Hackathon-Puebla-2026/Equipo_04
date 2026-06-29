@@ -1,0 +1,17 @@
+# Dependencias base del proyecto (punto de partida, sin versiones fijadas).
+# Ajustar/fijar versiones segun el entorno de cada quien.
+
+# Datos
+pandas
+requests
+numpy
+
+# Stack cuantico (CPU por defecto)
+pennylane
+qiskit
+qiskit-aer
+
+# Variantes GPU (opcionales, dependen de la maquina; instalar aparte):
+#   pennylane-lightning-gpu   -> qml.device("lightning.gpu", ...)
+#   qiskit-aer-gpu            -> AerSimulator(device="GPU")
+#   cuda-quantum (cudaq)      -> cudaq.set_target("nvidia")
