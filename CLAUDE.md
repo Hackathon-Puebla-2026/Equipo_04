@@ -28,6 +28,7 @@ The repo is in an early/setup stage: it contains the challenge spec (PDF), data-
 - `docs/CLAUDE_Falcon_QUBO_Input.md` — large implementation guide (EDA, classical baselines, full QUBO/Ising formulation §1-23, helper code, expected outputs). **On-demand** (not auto-imported, to save tokens) — read it when doing QUBO/EDA/baseline work. Guidance/example, not binding.
 - `docs/HALLAZGOS_CLAVE.md` — decision-critical digest of what ivan & emilio have done (data ready, preliminary-vs-official `S_max`/`S_min`, `Δu` convention, one-hot encodings, no QAOA yet). **Auto-imported** (always loaded).
 - `docs/RESUMEN_HALLAZGOS_EQUIPO.md` — full detailed summary of the team's EDA + preliminary QUBO work, with numbers, discrepancy table, and reusable-asset inventory. **On-demand** — read for the full picture.
+- `docs/SPEC_IMPLEMENTACION_QUBO.md` — **the active implementation spec**: locked conventions, module architecture (`scripts/falcon_*.py`), phased todo checklist with done-criteria, exact-lattice DP, rubric→tasks mapping. **On-demand** — read before/while coding any pipeline part.
 
 @docs/FalconChallenge_V6.md
 @docs/GUIDELINES.md
