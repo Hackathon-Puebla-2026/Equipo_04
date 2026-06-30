@@ -5,6 +5,6 @@
   "s_min_tcm": 822181.5,
   "flood_capacity_mcm": 3923.0,
   "method_A_scraped_mcm": 3288.726,
-  "method_B_derived_mcm": null,
+  "method_B_derived_mcm": 3288.726,
   "source": "IBWC WeeklyReports/storage.htm (Falcon Total Conservation) + Percentage.Conservation-Web-Telemetry@08461200"
 }
