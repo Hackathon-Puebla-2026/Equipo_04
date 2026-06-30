@@ -1,0 +1,9 @@
+item,status,note
+R_obs(t) desde Discharge.Best Available@08461300,OK,Convertido de m³/s a m³/semana si corresponde.
+S_obs(t) desde Total Storage@08461200,OK,Usado para S0 y validación.
+DeltaS_obs(t) oficial desde Discharge.Total.Change-in-Storage@08461200,FALTANTE,"Si falta, se deriva desde Total Storage y se etiqueta como no oficial."
+DeltaS_obs(t) disponible para cálculo,OK,derived_from_total_storage_not_official
+"T=12 semanas, L=3",OK,Semanas disponibles: 53
+"T=26 semanas, L=5",OK,Semanas disponibles: 53
+"T=52 semanas, L=5 o L=7",OK,Semanas disponibles: 53
+Smax oficial de reservoir overview,FALTANTE,"No viene en los CSV anexos; se puede usar max(S_obs) como proxy preliminar, no oficial."

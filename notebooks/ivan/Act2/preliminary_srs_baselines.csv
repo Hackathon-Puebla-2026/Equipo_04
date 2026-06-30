@@ -1,0 +1,3 @@
+method,SRS,Ccrit,Cdev,Csmooth,min_storage,weeks_below_Smin,release_balance_error,feasible,T,L,Delta_u_m3_week,Smax_used_m3,Smin_used_m3,DeltaS_source,official_status
+historical_u_zero,-0.0,0.0,0.0,0.0,348969800.0000005,0,0.0,True,12,3,2688917.5877030063,648839999.9999993,162209999.99999982,derived_from_total_storage_not_official,PRELIMINARY_NOT_OFFICIAL
+threshold_rule,-0.0,0.0,0.0,0.0,348969800.0000005,0,0.0,True,12,3,2688917.5877030063,648839999.9999993,162209999.99999982,derived_from_total_storage_not_official,PRELIMINARY_NOT_OFFICIAL

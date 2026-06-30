@@ -1,0 +1,9 @@
+pdf_dataset,variable,station,role,kind_expected,required_for_benchmark,status,files_detected
+Total Storage.Web-Daily-tcm@08461200,S_obs(t),08461200,Almacenamiento observado; sirve como S0 y para validar trayectoria.,S_obs_storage,True,PRESENTE,DataSetExport-Total Storage.Web-Daily-tcm@08461200-Instantaneous-m^3-20260629185416.csv
+Discharge.Total.Change-in-Storage@08461200,DeltaS_obs(t),08461200,Cambio observado de almacenamiento usado directamente en S_opt(t+1).,DeltaS_obs_official,True,FALTA OFICIAL; se puede DERIVAR desde Total Storage como aproximación,
+Discharge.Best Available@08461300,R_obs(t),08461300,Liberación/descarga histórica observada desde Falcon Dam.,R_obs_release,True,PRESENTE,DataSetExport-Discharge.Best Available@08461300-Instantaneous-m^3 s-20260629185451.csv
+Reservoir Elevation.Web-Daily-m@08461200,Elevation(t),08461200,Variable auxiliar para validar comportamiento almacenamiento-elevación.,reservoir_elevation,False,PRESENTE,DataSetExport-Reservoir Elevation.Web-Daily-m@08461200-Instantaneous-m-20260629185508.csv
+Lake Area.Best Available@08461200,Area(t),08461200,Variable auxiliar para evaporación/validación geométrica.,lake_area,False,PRESENTE,DataSetExport-Lake Area.Best Available@08461200-Instantaneous-m^2-20260629185344.csv
+"Evaporation,accumltd.Daily Evaporation - mm@08461200",Evaporation(t),08461200,Extensión opcional para incorporar pérdidas por evaporación.,evaporation,False,FALTANTE,
+Percentage.Conservation-Web-Telemetry@08461200,Conservation %(t),08461200,Extensión opcional para contexto operativo.,percentage_conservation,False,PRESENTE,DataSetExport-Percentage.Conservation-Web-Telemetry@08461200-Instantaneous-%-20260630094142.csv
+Falcon total conservation storage capacity,Smax,overview,Capacidad oficial para calcular Smin=0.25*Smax.,capacity_overview,True,FALTA OFICIAL; se puede usar max(S_obs) como proxy NO OFICIAL,
