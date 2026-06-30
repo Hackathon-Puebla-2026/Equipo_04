@@ -12,13 +12,35 @@ The repo is in an early/setup stage: it contains the challenge spec (PDF), data-
 
 - `Ejemplos de ejecuciones.ipynb` — minimal smoke tests for the quantum stack: the same 4-qubit parametric circuit run on PennyLane (`lightning.gpu`), Qiskit Aer (`device="GPU"`), and CUDA Quantum (`nvidia` target). Use these to validate the environment and to fall back to CPU devices (`default.qubit` / `device="CPU"`) when no GPU is present.
 - `FalconChallenge/Descargas.ipynb` — data downloader for challenge points 8 & 9. Pulls IBWC/USIBWC sources into `data/raw/`, scrapes link indexes, and writes a reproducible `data/falcon_download_manifest.json`. Intentionally avoids `beautifulsoup4`/`lxml`/`openpyxl` (uses stdlib `html.parser` + `requests`).
+- `FalconChallenge/Smax_search.ipynb` — resolves `S_max` (Falcon conservation capacity) two independent ways: scraping the live IBWC reports and deriving it from `storage / (Conservation% / 100)`. Writes `data/falcon_reservoir_constants.json`.
+- `FalconChallenge/data/falcon_reservoir_constants.json` — resolved model constants: `S_max ≈ 3,288,726 TCM` (3,288.726 MCM), `S_min = 0.25·S_max ≈ 822,181.5 TCM`, flood capacity 3923 MCM (context only). Both derivation methods agree exactly.
+- `FalconChallenge/src/inspect_falcon_data.py` — helper to inspect the exported CSV datasets.
 - `FalconChallenge/FalconChallenge_V6.pdf` — authoritative challenge spec. Read this before changing any math; the formulas and benchmark constants below come from it.
-- `docs/FalconChallenge_V6.md` — markdown transcription of the spec PDF (cheaper to load and greppable). Imported below; the PDF remains the source of truth on any disagreement.
-- `docs/GUIDELINES.md` — team collaboration guidelines: frozen `FalconChallenge/`, per-person folder ownership, where shared code lives, results/data conventions. Imported below; follow it when creating or placing files.
+- `requirements.txt` — base Python deps; GPU variants (`lightning.gpu`, Aer-GPU, `cudaq`) are optional and machine-dependent.
+- `notebooks/ scripts/ results/` — per-person work folders (`julian/ emilio/ ivan/`) plus shared code at the root of `scripts/`. See `docs/GUIDELINES.md` for ownership rules.
+
+### Docs (`docs/`)
+
+- `docs/FalconChallenge_V6.md` — markdown transcription of the spec PDF (cheaper to load and greppable). **Auto-imported.** The PDF remains the source of truth on any disagreement.
+- `docs/GUIDELINES.md` — team collaboration guidelines: frozen `FalconChallenge/`, per-person folder ownership, where shared code lives, results/data conventions. **Auto-imported.** Follow it when creating or placing files.
+- `docs/FALCON_HANDOFF_GEORGIA_QUBO_REFERENCE.md` — lean, self-contained buffer of the transferable QUBO/QAOA patterns from the sibling Georgia VQ-MAR project (the one transferable idea, the Georgia→Falcon one-hot mapping, conventions, pitfalls). **Auto-imported.**
+- `docs/georgia_qubo_snippets.md` — buffered, ready-to-adapt code from Georgia (QUBO assembly, `precompute_diagonal`, manual QAOA circuit, energy verification). **On-demand** — read it when implementing the QUBO/QAOA pieces.
+- `docs/CLAUDE_Falcon_QUBO_Input.md` — large implementation guide (EDA, classical baselines, full QUBO/Ising formulation §1-23, helper code, expected outputs). **On-demand** (not auto-imported, to save tokens) — read it when doing QUBO/EDA/baseline work. Guidance/example, not binding.
 
 @docs/FalconChallenge_V6.md
 @docs/GUIDELINES.md
-@docs/CLAUDE_Falcon_QUBO_Input.md
+@docs/FALCON_HANDOFF_GEORGIA_QUBO_REFERENCE.md
+
+## Reference material (examples, not source of truth)
+
+Keep this hierarchy in mind — most docs are *guidance and worked examples*, not binding spec:
+
+- **Source of truth:** `FalconChallenge/FalconChallenge_V6.pdf` + its transcription `docs/FalconChallenge_V6.md`, plus the official benchmark constants in this file. On any disagreement, the spec wins.
+- **On-demand local guidance:** `docs/CLAUDE_Falcon_QUBO_Input.md` — a *suggested* QUBO formulation and file layout. Adopt what helps; deviate when the spec or our data says otherwise. Read it when implementing QUBO/EDA/baselines (it is not auto-imported, to keep context light).
+- **Buffered QUBO/QAOA patterns:** `docs/FALCON_HANDOFF_GEORGIA_QUBO_REFERENCE.md` (auto-imported, lean) + `docs/georgia_qubo_snippets.md` (on-demand code). These buffer the reusable machinery from the sibling Georgia VQ-MAR project locally, so you should rarely need the external repo.
+- **External deep reference (rarely needed):** the Georgia repo at `/Users/jmelmer/Documents/Personal/Jeff-QTeam/Repository-aquifer-recharge-georgia_data`. **Read-only**: never modify, run, or commit anything there. Read **specific** files on demand only — never bulk-load the repo into context. Treat its code as a pattern to adapt, not a spec to follow.
+
+For file placement, `docs/GUIDELINES.md` is authoritative — note the Georgia handoff assumes paths like `FalconChallenge/src/` and `data/processed/` that differ from our actual layout; follow GUIDELINES.
 
 ## The optimization problem (from the spec)
 
@@ -48,14 +70,18 @@ Datasets come from the IBWC water-data portal. Two stations matter:
 
 The official benchmark dataset is provided in a shared SharePoint folder (see `Descargas.ipynb` `source_urls`); downloading from IBWC directly is optional/for scaling extensions. If discharge is in m³/s, convert to volume over the time step before storage-balance modeling. `Descargas.ipynb` writes everything under `data/` (gitignored alongside `venv/`, `__pycache__/`, checkpoints).
 
-## Quantum environment
+## Compute environments
 
-GPU-targeted by default. If running without an NVIDIA GPU or the GPU plugins:
-- PennyLane: swap `qml.device("lightning.gpu", ...)` → `default.qubit` or `lightning.qubit`.
-- Qiskit Aer: swap `device="GPU"` → `device="CPU"` (check `backend.available_devices()`).
-- CUDA Quantum: requires a compatible NVIDIA install; no CPU fallback in the example.
+Two target machines:
 
-Always include a warmup run before timing, as the smoke-test notebook does.
+- **Local — MacBook Pro M4 (Apple Silicon).** No NVIDIA GPU. Use **CPU** simulators here: PennyLane `default.qubit`/`lightning.qubit`, Qiskit Aer `device="CPU"`. `lightning.gpu` and CUDA Quantum will NOT run locally (no CUDA); Aer has no Metal GPU backend. The many-core CPU is good for statevector-CPU sim and the precomputed-diagonal trick. Tune thread env vars to the core count (see `docs/georgia_qubo_snippets.md` §7).
+- **Remote GPU — WCentroid cluster.** Several NVIDIA GPUs including a **T4 (16 GB)**. CUDA is available here, so this is where `lightning.gpu`, Qiskit Aer `device="GPU"`, and CUDA Quantum (`nvidia` target) run. Use it for the larger/faster simulations.
+
+**Memory reality (drives encoding + instance choices):** dense statevector uses `2ⁿ × 16 bytes`. A 16 GB GPU (T4) tops out around **~30 qubits**; the precomputed-diagonal array (`2ⁿ × 8 bytes`) is similar. Implications:
+- Small instance T12/L3: **one-hot = 36 qubits → too big for statevector**; domain-wall or binary = 24 qubits → fits (~256 MB). So compact encodings aren't just nicer, they're what makes exact statevector QAOA feasible.
+- Medium (130 one-hot) / large: far beyond any statevector. Use **MPS / tensor-network** simulators (the 1-D temporal chain suits MPS well), sampling, or classical annealing — not brute statevector.
+
+Portability: keep device selection behind a flag/config so the same code runs CPU locally and GPU on WCentroid. Always include a warmup run before timing, as the smoke-test notebook does.
 
 ## Conventions
 
