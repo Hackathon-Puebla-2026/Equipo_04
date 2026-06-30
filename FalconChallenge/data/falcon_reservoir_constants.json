@@ -1,0 +1,10 @@
+{
+  "s_max_mcm": 3288.726,
+  "s_max_tcm": 3288726.0,
+  "s_max_m3": 3288726000.0,
+  "s_min_tcm": 822181.5,
+  "flood_capacity_mcm": 3923.0,
+  "method_A_scraped_mcm": 3288.726,
+  "method_B_derived_mcm": null,
+  "source": "IBWC WeeklyReports/storage.htm (Falcon Total Conservation) + Percentage.Conservation-Web-Telemetry@08461200"
+}

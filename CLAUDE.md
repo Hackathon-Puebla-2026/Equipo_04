@@ -18,6 +18,7 @@ The repo is in an early/setup stage: it contains the challenge spec (PDF), data-
 
 @docs/FalconChallenge_V6.md
 @docs/GUIDELINES.md
+@docs/CLAUDE_Falcon_QUBO_Input.md
 
 ## The optimization problem (from the spec)
 
