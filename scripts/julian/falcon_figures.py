@@ -138,7 +138,7 @@ def fig_A2_storage_band(wk, c):
     note("A2", "Storage vs physical bounds",
          f"Storage stays ~10-20% of S_max all year; min≈{S.min():.0f}Mm³ vs 0, "
          f"max≈{S.max():.0f}Mm³ vs {Smax:.0f}Mm³.",
-         "Quantum Impl. (25%) — justifies storage_bounds='drop' (0 qubits)",
+         "Quantum Impl. (25%) - justifies storage_bounds='drop' (0 qubits)",
          "Dropping 0≤S≤S_max costs zero optimality here.",
          "Pro: saves O(T) slacks. Con: must re-enable if a wetter regime approaches the bounds.")
 
@@ -186,7 +186,7 @@ def fig_A1_A3_constraints(wk, c):
          "(*table '~100%%' = the binding regime.)"
          % (min(util_act) * 100, max(util_act) * 100,
             min(r[4] for r in rows), max(r[4] for r in rows)),
-         "Quantum Impl. (25%) + Benchmarking (20%) — the relaxation rationale",
+         "Quantum Impl. (25%) + Benchmarking (20%) - the relaxation rationale",
          "Each relaxation is chosen by whether the constraint actually binds in our data (measured, not assumed).",
          "Pro: minimal qubits, provably lossless for the dropped ones. Con: data-regime-specific.")
 
@@ -202,7 +202,7 @@ def fig_A4_encoding_qubits():
     x = np.arange(len(names)); wdt = 0.27
     fig, ax = plt.subplots(figsize=(9, 4.3))
     ax.bar(x - wdt, oh, wdt, label="one-hot (T·L)", color="#1f77b4")
-    ax.bar(x, dw, wdt, label="domain-wall (T·(L−1)) — used on IBM HW", color="#2ca02c")
+    ax.bar(x, dw, wdt, label="domain-wall (T·(L−1)) - used on IBM HW", color="#2ca02c")
     ax.bar(x + wdt, bina, wdt, label="binary (T·⌈log₂L⌉)", color="#ff7f0e")
     ax.axhline(30, color="#d62728", ls="--", lw=1.3, label="statevector / HW block ceiling (~30 qubits)")
     ax.set(xticks=x, ylabel="qubits (full instance)",
@@ -211,9 +211,9 @@ def fig_A4_encoding_qubits():
     ax.legend(fontsize=7.5)
     save(fig, "A4_encoding_qubits")
     note("A4", "Qubit count by encoding (one-hot / domain-wall / binary)",
-         "medium T26/L5: one-hot=130q, domain-wall=104q, binary=78q — all >30 → chunking. Ivan's IBM "
+         "medium T26/L5: one-hot=130q, domain-wall=104q, binary=78q - all >30 → chunking. Ivan's IBM "
          "hardware run used domain-wall (4 bits/week) in blocks 7+7+7+5 (≤30q).",
-         "Quantum Impl. (25%) — justifies encoding + chunking choices",
+         "Quantum Impl. (25%) - justifies encoding + chunking choices",
          "Compact encodings + per-block chunking are what make QAOA fit a real device / statevector.",
          "Pro: domain-wall enabled the actual IBM-hardware run; binary fits small in statevector. "
          "Con: binary exact only for L≤4; every full instance still needs chunking.")
@@ -247,7 +247,7 @@ def fig_A5_penalty_sweep(wk, c):
     save(fig, "A5_penalty_sweep")
     note("A5", "Penalty magnitude is not the lever",
          "Exhaustive-QUBO SRS is constant (=%.5f) across 0.1–100× penalties (feasible)." % srs_vals[-1],
-         "Quantum Impl. (25%) — tuning insight",
+         "Quantum Impl. (25%) - tuning insight",
          "Penalty multiplier doesn't change the optimum; depth and the XY-mixer are the real levers.",
          "Pro: no brittle penalty tuning. Con: penalties still must be 'large enough' (very small breaks feasibility).")
 
@@ -269,7 +269,7 @@ def fig_B1_deltaS(wk, c):
     save(fig, "B1_deltaS_validation")
     note("B1", "ΔS cross-validated vs official IBWC",
          "Weekly derived == −official: corr=%+.3f, err≈0; official used raw drives storage negative." % corr,
-         "Baseline (20%) + Problem Formulation (25%) — data validity",
+         "Baseline (20%) + Problem Formulation (25%) - data validity",
          "Our ΔS matches the official series once the sign convention is fixed; results aren't preliminary.",
          "Pro: data is validated + sign trap documented. Con: official daily series has gaps/opposite sign.")
 
@@ -288,7 +288,7 @@ def fig_B2_drought(wk, c):
             label=f"observed storage (% capacity), {n_weeks}-wk benchmark window")
     ax.axhline(25, color="#ff7f0e", ls="--", lw=1.5, label="S_min = 25% (conservation threshold)")
     ax.set(xlabel="week", ylabel="% of S_max", xlim=(0, len(S) - 1), ylim=(0, 30),
-           title=f"Benchmark year ({n_weeks} wk): storage 10–20% of capacity — always below S_min (25%)")
+           title=f"Benchmark year ({n_weeks} wk): storage 10–20% of capacity - always below S_min (25%)")
     # Contexto de sequía multianual: estadística de auditoría por integración de ΔS,
     # NO la serie graficada (por eso va como anotación, no como línea).
     ax.text(0.015, 0.04,
@@ -300,11 +300,11 @@ def fig_B2_drought(wk, c):
     note("B2", "Drought regime frames the problem",
          f"Benchmark year ({n_weeks} wk, observed anchor): storage 10–20% of S_max, always below S_min. "
          "Multi-year audit (ΔS-integrated, 2020–2026) corroborates: 0/2182 days above S_min → C_crit dominates.",
-         "Problem Formulation (25%) — societal/hydrological context",
+         "Problem Formulation (25%) - societal/hydrological context",
          "The plotted year is critically low throughout; the 6-yr ΔS audit confirms it is a multi-year drought, "
          "so avoiding deeper shortfall (C_crit) is the priority.",
          "Pro: explains why u=0 optima appear at coarse L. Con: the reliable storage line is 1 year (the 6-yr "
-         "figure is a ΔS-integration audit, unreliable for absolute storage — see AUDITORIA_DATOS_Y_BRUTE).")
+         "figure is a ΔS-integration audit, unreliable for absolute storage - see AUDITORIA_DATOS_Y_BRUTE).")
 
 
 # ---------- C. Baseline & correctness --------------------------------------- #
@@ -343,14 +343,14 @@ def fig_C1_srs_bars(df, wk, c):
         ax.tick_params(axis="x", labelsize=7, rotation=35)
         ax.axhline(0, color="k", lw=0.6)
     axes[0].set_ylabel("SRS (higher = better)")
-    fig.suptitle("SRS by method — compare heights ONLY among feasible (solid green) bars. "
+    fig.suptitle("SRS by method - compare heights ONLY among feasible (solid green) bars. "
                  "Hatched red = INFEASIBLE: 'better' SRS only by overspending the balance budget |Σu|≤B.",
                  y=1.03, fontsize=9)
     save(fig, "C1_srs_by_method")
     note("C1", "SRS comparison per instance (feasibility-aware)",
          "Among FEASIBLE methods, DP ≥ historical ≥ threshold-balanced; threshold-pure/clamped look "
          "higher (e.g. medium −0.289) but are INFEASIBLE (|Σu|−B>0). Feasible-but-worse-than-hist "
-         "(debug/small threshold-balanced) is legitimate — u=0 is optimal in the drought.",
+         "(debug/small threshold-balanced) is legitimate - u=0 is optimal in the drought.",
          "Baseline (20%) + Benchmarking (20%)",
          "Compare only feasible bars; exact DP is the honest strong baseline for the quantum comparison.",
          "Pro: valid metric with feasibility made explicit. Con: naive threshold 'wins' only if you "
@@ -388,7 +388,7 @@ def fig_D1_quantum_vs_baseline(df, wk, c):
     note("D1", "Quantum vs baseline on the official benchmark",
          "full DP=%.4f ≥ DP-chunked=%.4f ≥ QAOA-chunked=%s; chunking gap vs QAOA gap separated."
          % (dp_full, dpc, qc_txt),
-         "Benchmarking (20%) + Quantum Impl. (25%) — the headline comparison",
+         "Benchmarking (20%) + Quantum Impl. (25%) - the headline comparison",
          "QAOA solves each block feasibly; the gap to full-DP is the price of chunking (a scaling limit), per spec §7.",
          "Pro: honest, feasible quantum result at 25q/block. Con: eta_local chunking caps ΔSRS; no quantum advantage (expected).")
 
@@ -455,7 +455,7 @@ def fig_D4_windows(df):
                  "first=weeks[0,T)  ·  middle=start (52−T)//2  ·  stress=lowest-mean-storage window",
                  y=1.03, fontsize=9)
     save(fig, "D4_window_robustness")
-    note("D4", "Window robustness (E1) — DP vs historical per window",
+    note("D4", "Window robustness (E1) - DP vs historical per window",
          "ΔSRS(DP−hist): debug/small ≈ 0 in ALL windows (u=0 optimal, drought+coarse L); medium >0 in "
          "every window → the optimum is genuinely non-trivial there, not a start-of-year artifact.",
          "Benchmarking (20%)",
@@ -507,8 +507,8 @@ def fig_E1_scaling(df):
     note("E1", "Scaling: L^T search space vs DP states explored (the collapse)",
          "medium L^T=1.49e18 → only 6,505 DP states (0.02s); large L7 8.81e43 → 49,739 states (0.20s). "
          "DP state=(t, C_t=Σk_j, k_prev): storage depends only on the integer cumulative sum C_t, so "
-         "exponentially many schedules fuse into O(T²·L²) states — exact, lossless (brute==dp).",
-         "Benchmarking (20%) — scaling analysis",
+         "exponentially many schedules fuse into O(T²·L²) states - exact, lossless (brute==dp).",
+         "Benchmarking (20%) - scaling analysis",
          "Exploiting optimal substructure turns a 10⁴³ search into ~10⁴ states: exact ground truth at every size.",
          "Pro: DP is exact + sub-second at all scales. Con: it's a classical baseline; QAOA can't match its scaling.")
 
@@ -564,7 +564,7 @@ def fig_F1_policy(wk, c):
 
 
 def write_notes():
-    lines = ["# Figure notes — Falcon presentation\n",
+    lines = ["# Figure notes - Falcon presentation\n",
              "> Generado por `scripts/julian/falcon_figures.py`. Cada figura: qué prueba, rúbrica, "
              "talking point y pro/con. PNGs en `results/figures/`.\n",
              "## Feasibility explainer (para C1 / D1 / D4)\n",
@@ -572,7 +572,7 @@ def write_notes():
              "`R(t)=R_obs+u≥0`, `|u(t)|≤u_max`, `0≤S(t)≤S_max`, y **`|Σu(t)|≤B=η·ΣR_obs`** (presupuesto "
              "de balance). En nuestros datos las primeras tres casi nunca atan: **la que decide "
              "factibilidad es el balance**. *Factibilidad y SRS son ejes independientes*: una política "
-             "puede ser factible y peor que el histórico (p.ej. threshold-balanced en debug/small — "
+             "puede ser factible y peor que el histórico (p.ej. threshold-balanced en debug/small - "
              "legítimo, en sequía `u=0` ya es óptimo), y una **infactible puede tener un SRS más alto "
              "solo por gastar de más el presupuesto** (p.ej. threshold-pure en medium, −0.289, pero "
              "`|Σu|−B>0`). **Regla de lectura: comparar SRS solo entre barras factibles.**\n",
@@ -580,7 +580,7 @@ def write_notes():
              "*first* = semanas `[0,T)`; *middle* = start `(52−T)//2`; *stress* = la ventana de T "
              "semanas con **menor storage medio** (déficit más profundo, la más exigente).\n"]
     for n in NOTES:
-        lines += [f"## {n['id']} — {n['title']}  (`{n['id'].replace('/','_')}...png`)",
+        lines += [f"## {n['id']} - {n['title']}  (`{n['id'].replace('/','_')}...png`)",
                   f"- **Proves:** {n['proves']}",
                   f"- **Rubric:** {n['rubric']}",
                   f"- **Talking point:** {n['talking']}",
