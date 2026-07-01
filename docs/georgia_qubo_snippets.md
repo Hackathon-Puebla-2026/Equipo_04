@@ -7,8 +7,9 @@ need to open the external repo. Original locations are noted per block for rare 
 
 The problem-agnostic pieces (`qubo_energy`, `build_quadratic_program`, `verify_energy`,
 `precompute_diagonal`, `build_qaoa_circuit`, `brute_force`) port to Falcon **unchanged** — they only
-care about the matrix `Q`. Only `assemble_qubo` is domain-specific; for Falcon, build `Q` from the
-one-hot terms in `docs/CLAUDE_Falcon_QUBO_Input.md` §11-§15, then feed it to everything below.
+care about the matrix `Q`. Only `assemble_qubo` is domain-specific; for Falcon, `Q` is already built
+by `scripts/falcon_qubo.py::build_qubo` (one-hot/binary; see `docs/SPEC_IMPLEMENTACION_QUBO.md`), then
+feed it to everything below.
 
 Convention used everywhere: `H(x) = xᵀQx + const`, minimize over `x ∈ {0,1}ⁿ`. For Falcon, bits are
 one-hot `x_{t,ℓ}=1 ⟺ u(t)=aₗ`, so `n = T·L` (36 for T12/L3, 130 for T26/L5).

@@ -2,8 +2,8 @@
 
 Plan activo del equipo: un **builder de QUBO configurable, reutilizado por todos los solvers**,
 construido por fases (MVP primero) y atacado tarea por tarea con el checklist de abajo. Cada tarea es
-suficientemente específica para empezar a codear. Detalle de hallazgos previos:
-`docs/RESUMEN_HALLAZGOS_EQUIPO.md`; digest: `docs/HALLAZGOS_CLAVE.md`.
+suficientemente específica para empezar a codear. Digest de hallazgos: `docs/HALLAZGOS_CLAVE.md`;
+auditoría de datos/brute: `docs/AUDITORIA_DATOS_Y_BRUTE.md`.
 
 ---
 

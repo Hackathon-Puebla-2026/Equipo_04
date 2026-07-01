@@ -12,8 +12,8 @@ need the external repo:
   `/Users/jmelmer/Documents/Personal/Jeff-QTeam/Repository-aquifer-recharge-georgia_data`. Index at
   the bottom of the snippets file.
 
-These are **examples to adapt, not source of truth** — the Falcon spec (`docs/FalconChallenge_V6.md`)
-and `docs/CLAUDE_Falcon_QUBO_Input.md` define the actual formulation.
+These are **examples to adapt, not source of truth** — the Falcon spec (`docs/FalconChallenge_V6.md`),
+`docs/SPEC_IMPLEMENTACION_QUBO.md`, and the implemented `scripts/falcon_qubo.py` define the actual formulation.
 
 ## The one transferable idea
 

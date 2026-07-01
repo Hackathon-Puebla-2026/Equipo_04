@@ -1,6 +1,7 @@
 # Hallazgos clave del equipo (digest para decidir)
 
-Conclusiones decisivas del trabajo de ivan y emilio. Detalle completo: `docs/RESUMEN_HALLAZGOS_EQUIPO.md`.
+Conclusiones decisivas del equipo. Detalle de datos/brute: `docs/AUDITORIA_DATOS_Y_BRUTE.md`;
+resultados: `docs/ANALISIS_DP_Y_RESULTADOS.md`.
 **Plan activo (qué construir y cómo):** `docs/SPEC_IMPLEMENTACION_QUBO.md`.
 
 - **Datos listos:** 1 año, **53 semanas**, EDA hecha (0 faltantes/0 duplicados). Dataset semanal en

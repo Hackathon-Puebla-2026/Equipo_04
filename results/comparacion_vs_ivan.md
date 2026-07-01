@@ -1,8 +1,8 @@
 # Comparación de resultados: pipeline `scripts/` vs ivan
 
 Comparación de nuestros baselines/DP (`scripts/falcon_*.py`, corrida en `results/runs_summary.csv`)
-contra los resultados reportados por ivan en `docs/FalconChallenge_Report_para_Claude.md` (reporte
-LaTeX->md, autoritativo) y su notebook `notebooks/ivan/Act2/FalconChallenge_Colab_Solution(1)(1).ipynb`.
+contra los resultados reportados por ivan en su notebook
+`notebooks/ivan/Act2/FalconChallenge_Colab_Solution(1)(1).ipynb`.
 Ambos usan las constantes oficiales (`S_max=3,288.726 Mm3`, `S_min=822.182 Mm3`, `eta=0.10`).
 
 ## Resumen del reporte de ivan
