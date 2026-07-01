@@ -100,7 +100,9 @@ scripts/
   falcon_encodings.py # build_var_index(T,L); linear_expr_u(t); linear_expr_storage(t)
   falcon_qubo.py      # add_square_of_linear_expression(...); build_qubo(cfg,data); qubo_energy(...); to_quadratic_program(Q)
   falcon_solvers.py   # exhaustive(...); simulated_annealing(...); decode_and_verify(samples,...)
-  falcon_baselines.py # historical(...); threshold_rule(...); dp_optimal(...)  # DP exacto (§7)
+  falcon_baselines.py # historical(...); threshold_rule(..., clamp_release=False); dp_optimal(...)  # DP exacto (§7)
+  falcon_results.py   # [HECHO] record_run(...): esquema fijo -> results/runs/{run_id}.json + results/runs_summary.csv
+  falcon_run_baselines.py # [HECHO] corre+registra los 3 baselines en small/medium/large; deja SRS_hist (ref) guardada
   falcon_qaoa.py      # (Fase 3) build/run/decode QAOA; flag de device CPU/GPU/MPS
 ```
 
@@ -110,26 +112,29 @@ scripts/
 
 ### Fase 0: fundamentos
 
-- [ ] **Entorno**: venv desde `requirements.txt` + pyright LSP. *Done:* `import qiskit, dimod, pandas`
-  OK; pyright resuelve símbolos. (El usuario corre con Jupyter; el venv es para QPU/verificación.)
-- [ ] **`falcon_constants.py`** :: `load_official_constants() -> dict` (lee el JSON, m³);
-  `instance_params(weekly_release, T, L) -> {Δu, u_max, levels}` (Δu = 0.25·mediana sobre T semanas);
-  `compute_weights(T, S_min, u_max) -> {w1,w2,w3}`. *Done:* `S_min==0.25·S_max`; pesos coinciden con
-  fórmulas spec §5 en ejemplo a mano; registra también Δu de ventana completa.
-- [ ] **`falcon_data.py`** :: `load_ibwc_csv(path)` (unidad desde header `Value (...)`);
+- [x] **Entorno (mínimo)**: `.venv` con `pandas numpy pytest` (Python 3.14). *Done.* El stack cuántico
+  (`qiskit, dimod`) + pyright LSP se instalan en Fase 1/3 (posible Python 3.11/3.12 por wheels).
+- [x] **`falcon_constants.py`** :: `load_official_constants() -> dict` (lee el JSON, m³);
+  `instance_params(weekly_release, T, L) -> {delta_u, u_max, levels, delta_u_full_ref}`
+  (Δu = 0.25·mediana sobre T semanas); `compute_weights(T, S_min, u_max) -> {w1,w2,w3}`. *Done:*
+  `S_min==0.25·S_max` (822,181,500 m³); pesos y niveles validados; registra Δu de ventana completa.
+- [x] **`falcon_data.py`** :: `load_ibwc_csv(path)` (unidad desde header `Value (...)`);
   `build_weekly_benchmark(data_dir) -> DataFrame[week, week_start, week_end, S_obs_m3, R_obs_m3_week,
   DeltaS_obs_m3, DeltaS_source]`. Reglas: S close-of-week; R por integración nativa 15-min; bins de
   7 días anclados, descartar parcial → **52 semanas**; todo en m³. *Done:* 52 filas; validación contra
   CSV de ivan (merge por semana, |Δ| < tol; documentar diferencias por bordes parciales).
-- [ ] **`falcon_storage.py`** :: `simulate_storage(S0, deltaS, u) -> S[len T+1]`;
+- [x] **`falcon_storage.py`** :: `simulate_storage(S0, deltaS, u) -> S[len T+1]`;
   `compute_release(R_obs, u)`; `check_constraints(R_obs, u, S, Smax, umax, eta_B) -> {feasible,
   violations}`. *Done:* recursión `S(t+1)=S(t)+ΔS−u` coincide con ejemplo a mano.
-- [ ] **`falcon_srs.py`** :: `compute_costs(S, u, Smin) -> {Ccrit, Cdev, Csmooth}`
+- [x] **`falcon_srs.py`** :: `compute_costs(S, u, Smin) -> {Ccrit, Cdev, Csmooth}`
   (Ccrit=Σmax(0,Smin−S)², Cdev=Σu², Csmooth=Σ(u−u₋₁)²); `compute_srs(costs, weights) -> float`.
   *Done:* coincide con cálculo a mano en ejemplo de 3 semanas. Reusa patrón `evaluate_srs` de ivan.
-- [ ] **`falcon_baselines.py`** :: `historical(T)`; `threshold_rule(R_obs, deltaS, S0, Smin, Δu)`;
+- [x] **`falcon_baselines.py`** :: `historical(T)`; `threshold_rule(R_obs, deltaS, S0, Smin, Δu)`;
   `dp_optimal(data, params) -> {u*, SRS*}` (DP exacto §7). *Done:* `dp_optimal` ≥ SRS de histórico y
-  umbral; `dp_optimal == brute_force` en T=3.
+  umbral; `dp_optimal == brute_force` en T=3 (L=3 y L=5); T=52 en ~80 ms.
+- [x] **Smoke Fase 0** `scripts/falcon_smoke_fase0.py`: con `S_min` oficial el SRS es no trivial
+  (hist −0.296, thr −0.300, dp −0.294, feasible) y DP domina a los baselines. `pyrightconfig.json`
+  agregado (extraPaths=scripts).
 
 ### Fase 1: el builder QUBO (centro)
 

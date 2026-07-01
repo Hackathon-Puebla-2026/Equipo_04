@@ -16,6 +16,9 @@ env/
 .venv/
 .env/
 
+# Ignore generated/processed datasets at repo root (raw data shared via SharePoint, GUIDELINES §5)
+/data/
+
 # Ignore system files
 .DS_Store
 Thumbs.db
