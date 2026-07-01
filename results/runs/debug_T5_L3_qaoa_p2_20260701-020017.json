@@ -1,0 +1,79 @@
+{
+  "run_id": "debug_T5_L3_qaoa_p2_20260701-020017",
+  "timestamp": "20260701-020017",
+  "owner": "",
+  "method": "qaoa",
+  "variant": "p2",
+  "instance": "debug",
+  "T": 5,
+  "L": 3,
+  "official_status": "preliminary",
+  "SRS": -0.3460271039375933,
+  "Ccrit": 1.1093970801960151e+18,
+  "Cdev": 12643773110655.04,
+  "Csmooth": 8429182073770.025,
+  "dSRS_vs_historical": -0.06904211048758085,
+  "dSRS_vs_threshold": 0.024538807642080385,
+  "dSRS_vs_dp": -0.06904211048758085,
+  "min_storage": 375611223.3226168,
+  "weeks_below_Smin": 6,
+  "release_balance_error": 0.0,
+  "feasible": true,
+  "runtime_seconds": 9.331317707998096,
+  "delta_u": 2052946.9152623047,
+  "u_max": 2052946.9152623047,
+  "eta": 0.1,
+  "S_max": 3288726000.0,
+  "S_min": 822181500.0,
+  "delta_u_full_ref": 3053171.405289538,
+  "w1": 2.4655473573922224e-19,
+  "w2": 4.745418908967719e-15,
+  "w3": 1.482943409052412e-15,
+  "encoding": "onehot",
+  "n_qubits": 17,
+  "p_depth": 2,
+  "energy": 0.06210836221456706,
+  "approximation_ratio": 1.2492630002355738,
+  "seed": 42,
+  "simulator": "qiskit_aer_statevector",
+  "penalties": {
+    "onehot": 2.769849934500124,
+    "R": 2.769849934500124,
+    "bal_soft": 1.793161795737659e-13,
+    "bal_slack": 2.769849934500124
+  },
+  "beta": [
+    2.8563352525693904,
+    -0.1713705495827179
+  ],
+  "gamma": [
+    0.395277713306529,
+    1.662382394906009
+  ],
+  "optimizer_iterations": 200,
+  "window_start": null,
+  "window_label": null,
+  "u": [
+    -2052946.9152623047,
+    -2052946.9152623047,
+    0.0,
+    0.0,
+    2052946.9152623047
+  ],
+  "B": 3930233.756860384,
+  "violations": {
+    "release_negative": 0,
+    "u_exceeds_umax": 0,
+    "storage_out_of_bounds": 0,
+    "balance_excess": 0.0,
+    "min_release": 1266998.7550064926,
+    "min_storage": 375611223.3226168,
+    "max_storage": 406433644.94484466,
+    "abs_balance": 2052946.9152623047
+  },
+  "references": {
+    "historical": -0.27698499345001243,
+    "threshold": -0.37056591157967367,
+    "dp": -0.27698499345001243
+  }
+}
