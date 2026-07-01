@@ -29,6 +29,7 @@ The repo is in an early/setup stage: it contains the challenge spec (PDF), data-
 - `docs/HALLAZGOS_CLAVE.md` — decision-critical digest of what ivan & emilio have done (data ready, preliminary-vs-official `S_max`/`S_min`, `Δu` convention, one-hot encodings, no QAOA yet). **Auto-imported** (always loaded).
 - `docs/RESUMEN_HALLAZGOS_EQUIPO.md` — full detailed summary of the team's EDA + preliminary QUBO work, with numbers, discrepancy table, and reusable-asset inventory. **On-demand** — read for the full picture.
 - `docs/SPEC_IMPLEMENTACION_QUBO.md` — **the active implementation spec**: locked conventions, module architecture (`scripts/falcon_*.py`), phased todo checklist with done-criteria, exact-lattice DP, rubric→tasks mapping. **On-demand** — read before/while coding any pipeline part.
+- `docs/ANALISIS_DP_Y_RESULTADOS.md` — DP complexity/timing analysis (states-explored vs `Lᵀ`, why sub-second is expected, lossless pruning) + current results digest (baselines/DP across instances, ΔSRS, feasibility, cross-validation vs ivan). **On-demand.** Raw data in `results/runs_summary.csv`.
 
 @docs/FalconChallenge_V6.md
 @docs/GUIDELINES.md

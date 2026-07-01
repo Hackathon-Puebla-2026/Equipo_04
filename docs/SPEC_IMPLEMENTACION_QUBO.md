@@ -177,6 +177,20 @@ scripts/
 - [ ] **Writeup (rúbrica 1 y 5)**: formulación del problema + SDG 6.4/6.5/13.1 + impacto + literatura;
   pros/cons; nota de uso de IA; slides en inglés. *Done:* cubre los 5 criterios de la rúbrica.
 
+### Opcionales / baselines extra (no bloquean el flujo QUBO)
+
+- [ ] **`falcon_milp.py` :: `milp_optimal(...)` (OPCIONAL)** — óptimo exacto **independiente** para
+  cross-check del DP, sobre todo en **medium (T26/L5)** donde brute force es imposible (`5^26≈1.5e18`).
+  Modelo: `x_{t,ℓ}` binario one-hot (`Σ_ℓ x_{t,ℓ}=1`), `u_t=Σ_ℓ aₗ x_{t,ℓ}`, storage lineal en bits;
+  `C_crit` linealizado con déficit `d_t≥0, d_t≥S_min−S_t` (min Σ d_t²  →  MIQP, o aprox. lineal Σ d_t
+  si el solver es lineal); `C_dev/C_smooth` cuadráticos (MIQP) o linealizados; restricciones R≥0,
+  `0≤S≤S_max`, balance `|Σu|≤B`. Registrar con `record_run(method="milp")`. Dependencia:
+  `python-mip`/`PuLP+CBC` (lineal) o solver MIQP (posible Python 3.11/3.12). *Done:* `milp == dp` en
+  medium (o explica la diferencia si se usa aproximación lineal de C_crit). **Sensibilidad, reportar
+  aparte del score oficial.**
+- [ ] **Regla de umbral balanceada** (de ivan) y **annealing quantum-inspired** como baselines extra
+  comparables (registrar con `record_run`). Opcionales.
+
 ---
 
 ## 7. DP exacto sobre lattice (ground truth para todas las instancias)
