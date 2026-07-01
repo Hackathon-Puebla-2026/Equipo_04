@@ -36,10 +36,24 @@ import falcon_srs as srs
 import falcon_storage as st
 
 REPO = Path(__file__).resolve().parent.parent.parent
-FIGDIR = REPO / "results" / "figures"
 CSV = REPO / "results" / "runs_summary.csv"
 INSTANCES = [(5, 3, "debug"), (12, 3, "small"), (26, 5, "medium"), (52, 5, "large"), (52, 7, "large7")]
 NOTES: list[dict] = []
+
+# AUDITORIUM=1 -> figuras con tipografia grande / lineas gruesas para proyeccion en
+# auditorio, escritas en presentation/figures/. Por defecto, figuras de analisis en
+# results/figures/. (No cambia la logica, solo rcParams y el directorio de salida.)
+AUDITORIUM = os.environ.get("AUDITORIUM") == "1"
+if AUDITORIUM:
+    FIGDIR = REPO / "presentation" / "figures"
+    matplotlib.rcParams.update({
+        "font.size": 22, "axes.titlesize": 24, "axes.labelsize": 22,
+        "xtick.labelsize": 18, "ytick.labelsize": 18, "legend.fontsize": 18,
+        "lines.linewidth": 3, "lines.markersize": 9, "figure.dpi": 150,
+        "axes.titleweight": "bold", "font.weight": "medium",
+    })
+else:
+    FIGDIR = REPO / "results" / "figures"
 
 
 def note(fid, title, proves, rubric, talking, procon):
