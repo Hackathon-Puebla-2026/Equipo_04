@@ -175,14 +175,22 @@ scripts/
 
 - [ ] `C_crit` Opción B (slacks déficit/superávit) en `falcon_qubo.py`.
 - [ ] Restricciones exactas con slacks (balance, cotas de storage).
-- [ ] Encoding **domain-wall** (`T·(L−1)` bits) en `falcon_encodings.py`.
+- [~] Encoding **domain-wall** (`T·(L−1)` bits). *En scripts compartidos: NO (build_qubo solo one-hot
+  + binary).* **Ya usado en HARDWARE**: el notebook IBM de ivan
+  (`docs/FalconChallenge_analisis_integral_notebook_IBM_para_Claude.md`) construye el QUBO con
+  domain-wall (4 bits/semana, L=5) y corre T26/L5 en **IBM Quantum** en bloques 7+7+7+5 (≤30q). Port al
+  builder compartido queda opcional.
 - [x] Encoding **binary/log** (`T·⌈log₂L⌉` bits; necesario para que la instancia chica entre en
   statevector, §10). *Done (2026-07-01):* `falcon_encodings.py::BinaryVarIndex` + `build_binary_var_index`;
   `build_qubo` despacha por encoding (validez=penalizar codewords inválidos `l≥L`, release-prohibit y
   balance agnósticos vía `balance_M_expr`/`add_codeword_penalty`); exacto para `b≤2` (L≤4). Validado:
   roundtrip, gate energía==−SRS (`3e-14`), y **mínimo global == DP\*** en T5/L3. T12/L3 = 24 qubits (vs
   36 one-hot). Sin regresión en one-hot (gate + `exhaustive==dp` OK). Ver `docs/ANALISIS_DP_Y_RESULTADOS.md` §9.
-- [ ] **XY-mixer** para eliminar la penalización one-hot (Fase 3 lo usa).
+- [x] **XY-mixer** para eliminar la penalización one-hot. *Done (2026-07-01):*
+  `falcon_qaoa.build_qaoa_circuit_xy` (estado-W por semana + anillo XY `rxx+ryy`, `mixer="xy"` en
+  `run_qaoa`); confina al subespacio one-hot (**100% de prob**, AR 1.0 en debug T5/L3). Vuelve
+  **factible** el chunked-QAOA de medium (antes infactible con penalización). Val:
+  `scripts/julian/falcon_xymixer_check.py`.
 - [ ] *Done de cada variante:* reproduce el mismo SRS para el mismo `u` decodificado.
 - [x] **E2 (clásico) - chunking temporal**: `scripts/falcon_chunked.py::staged_solve(..., solver="dp")`.
   Parte T en bloques de `block_size`; secuencial: `S0_blk`=storage final del bloque previo,
@@ -209,12 +217,13 @@ scripts/
   (one-hot, 17q, **AR 1.000**) y small T12/L3 (binary, 24q, AR 1.31, factible). Tabla en §9. **Falta**
   T26/T52 (no entran en statevector → MPS/sampling o chunking E2). Calibración de penalties (§8):
   hecha, no es la palanca (maxabs absorbe el multiplicador); la palanca es profundidad/XY-mixer.
-- [ ] **E1 - robustez de ventana**: `falcon_run_windows.py` (o extensión del runner) corre cada método
-  (historical, threshold pure/clamped/balanced, dp, brute si enumerable) en **3 ventanas por instancia**
-  (excepto T52 que ocupa todo el año): `first` (start=0), `middle` (start=(52-T)//2), `stress` (auto:
-  ventana de T semanas con menor storage medio o mayor varianza). Agregar campo `window_start` /
-  `window_label` al esquema de `falcon_results.py` y al `run_id` (evita colisiones). *Done:* tabla que
-  muestra la variación de SRS/ΔSRS/factibilidad entre ventanas; concluir si `first` es representativa.
+- [x] **E1 - robustez de ventana**: `falcon_run_windows.py` corre cada método (historical, threshold
+  pure/clamped/balanced, dp, brute si enumerable) en **3 ventanas por instancia** (`first` start=0,
+  `middle` start=(52-T)//2, `stress` = ventana de menor storage medio); `window_start`/`window_label`
+  agregados al esquema de `falcon_results.py` y al `run_id`. *Done (2026-07-01):* el DP escanea TODAS
+  las ventanas; **óptimo `u*=0` en toda ventana de debug/small** (sequía) y **no trivial en las 27 de
+  medium** → `first` es representativa. Figura `results/figures/D4_window_robustness.png` (DP vs
+  histórico por ventana con ΔSRS).
 - [x] **E2 (cuántico) - chunking en QUBO/QAOA**: `staged_solve(..., solver="qaoa")` cambia el solver
   por-bloque (DP → nuestro `falcon_qaoa.run_qaoa`); cada bloque = QUBO chico que entra en statevector.
   *Done (2026-07-01):* runner `falcon_run_chunked.py`, `method="qaoa_chunked"`. **T26/L5 bloques de 5 =
@@ -228,17 +237,12 @@ scripts/
 
 ### Opcionales / baselines extra (no bloquean el flujo QUBO)
 
-- [ ] **`falcon_milp.py` :: `milp_optimal(...)` (OPCIONAL)**: óptimo exacto **independiente** para
-  cross-check del DP, sobre todo en **medium (T26/L5)** donde brute force es imposible (`5^26≈1.5e18`).
-  Modelo: `x_{t,ℓ}` binario one-hot (`Σ_ℓ x_{t,ℓ}=1`), `u_t=Σ_ℓ aₗ x_{t,ℓ}`, storage lineal en bits;
-  `C_crit` linealizado con déficit `d_t≥0, d_t≥S_min−S_t` (min Σ d_t²  →  MIQP, o aprox. lineal Σ d_t
-  si el solver es lineal); `C_dev/C_smooth` cuadráticos (MIQP) o linealizados; restricciones R≥0,
-  `0≤S≤S_max`, balance `|Σu|≤B`. Registrar con `record_run(method="milp")`. Dependencia:
-  `python-mip`/`PuLP+CBC` (lineal) o solver MIQP (posible Python 3.11/3.12). *Done:* `milp == dp` en
-  medium (o explica la diferencia si se usa aproximación lineal de C_crit). **Sensibilidad, reportar
-  aparte del score oficial.**
 - [ ] **Regla de umbral balanceada** (de ivan) y **annealing quantum-inspired** como baselines extra
   comparables (registrar con `record_run`). Opcionales.
+
+> **MILP descartado** (2026-07-01): el DP exacto sobre lattice ya es óptimo global exacto en TODAS las
+> instancias (validado `brute == dp == ivan`), así que un cross-check MILP independiente no aporta lo
+> suficiente para justificar la dependencia extra. No se implementa.
 
 ---
 
@@ -294,6 +298,7 @@ MPS/sampling. Device tras un flag: CPU (M4) local; GPU/MPS (T4, WCentroid) para 
   Decidido: anclado + descartar parcial → 52; reconfirmar al validar contra ivan.
 - ¿Mantener además un `Δu` de referencia fijo para sanity cross-instancia? Decidido: registrar, no
   optimizar con él.
-- Baseline "informado por literatura" (rúbrica 20%): ¿DP exacto cuenta como state-of-the-art o sumamos
-  MILP/SA citando refs [1-3]?
+- Baseline "informado por literatura" (rúbrica 20%): el **DP exacto** cuenta como state-of-the-art
+  (óptimo global exacto, validado `brute == dp == ivan`); citar refs [1-3] al presentarlo. MILP
+  descartado (§6).
 - Granularidad/ábaco del writeup de impacto social (rúbrica 25%): definir antes de la última semana.

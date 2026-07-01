@@ -121,8 +121,6 @@ falta el dataset oficial `Discharge.Total.Change-in-Storage@08461200`, por eso t
 
 ## 7. Pendiente
 
-- **MILP** (opcional): óptimo exacto independiente para verificar el DP en medium (donde brute es
-  imposible, `5^26≈1.5e18`). Ver spec `docs/SPEC_IMPLEMENTACION_QUBO.md` (Opcionales).
 - **QUBO/QAOA** (Fase 1+): el DP es el ground truth para validar la energía y el óptimo.
 - Métodos extra de ivan: regla de umbral balanceada **ya incorporada** (`threshold/balanced`);
   annealing quantum-inspired pendiente.

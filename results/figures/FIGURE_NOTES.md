@@ -2,6 +2,14 @@
 
 > Generado por `scripts/julian/falcon_figures.py`. Cada figura: qué prueba, rúbrica, talking point y pro/con. PNGs en `results/figures/`.
 
+## Feasibility explainer (para C1 / D1 / D4)
+
+Una política `u(t)` es **factible** solo si cumple las **4 restricciones oficiales**: `R(t)=R_obs+u≥0`, `|u(t)|≤u_max`, `0≤S(t)≤S_max`, y **`|Σu(t)|≤B=η·ΣR_obs`** (presupuesto de balance). En nuestros datos las primeras tres casi nunca atan: **la que decide factibilidad es el balance**. *Factibilidad y SRS son ejes independientes*: una política puede ser factible y peor que el histórico (p.ej. threshold-balanced en debug/small — legítimo, en sequía `u=0` ya es óptimo), y una **infactible puede tener un SRS más alto solo por gastar de más el presupuesto** (p.ej. threshold-pure en medium, −0.289, pero `|Σu|−B>0`). **Regla de lectura: comparar SRS solo entre barras factibles.**
+
+## Definición de ventanas (para D4)
+
+*first* = semanas `[0,T)`; *middle* = start `(52−T)//2`; *stress* = la ventana de T semanas con **menor storage medio** (déficit más profundo, la más exigente).
+
 ## A2 — Storage vs physical bounds  (`A2...png`)
 - **Proves:** Storage stays ~10-20% of S_max all year; min≈317Mm³ vs 0, max≈649Mm³ vs 3289Mm³.
 - **Rubric:** Quantum Impl. (25%) — justifies storage_bounds='drop' (0 qubits)
@@ -14,11 +22,11 @@
 - **Talking point:** Each relaxation is chosen by whether the constraint actually binds in our data (measured, not assumed).
 - **Pro/con:** Pro: minimal qubits, provably lossless for the dropped ones. Con: data-regime-specific.
 
-## A4 — Qubit count by encoding  (`A4...png`)
-- **Proves:** one-hot medium=130q, large=260q; binary halves it but still >26 → chunking needed.
+## A4 — Qubit count by encoding (one-hot / domain-wall / binary)  (`A4...png`)
+- **Proves:** medium T26/L5: one-hot=130q, domain-wall=104q, binary=78q — all >30 → chunking. Ivan's IBM hardware run used domain-wall (4 bits/week) in blocks 7+7+7+5 (≤30q).
 - **Rubric:** Quantum Impl. (25%) — justifies encoding + chunking choices
-- **Talking point:** Compact encodings and per-block chunking are what make statevector QAOA feasible.
-- **Pro/con:** Pro: binary fits small in statevector. Con: binary exact only for L≤4; medium needs chunking.
+- **Talking point:** Compact encodings + per-block chunking are what make QAOA fit a real device / statevector.
+- **Pro/con:** Pro: domain-wall enabled the actual IBM-hardware run; binary fits small in statevector. Con: binary exact only for L≤4; every full instance still needs chunking.
 
 ## A5 — Penalty magnitude is not the lever  (`A5...png`)
 - **Proves:** Exhaustive-QUBO SRS is constant (=-0.29626) across 0.1–100× penalties (feasible).
@@ -38,11 +46,11 @@
 - **Talking point:** The reservoir is critically low all year, so avoiding deeper shortfall (C_crit) is the priority.
 - **Pro/con:** Pro: explains why u=0 optima appear at coarse L. Con: window is a drought; wetter years may differ.
 
-## C1 — SRS comparison per instance  (`C1...png`)
-- **Proves:** DP ≥ all feasible baselines; threshold-pure/clamped are infeasible (balance violated).
+## C1 — SRS comparison per instance (feasibility-aware)  (`C1...png`)
+- **Proves:** Among FEASIBLE methods, DP ≥ historical ≥ threshold-balanced; threshold-pure/clamped look higher (e.g. medium −0.289) but are INFEASIBLE (|Σu|−B>0). Feasible-but-worse-than-hist (debug/small threshold-balanced) is legitimate — u=0 is optimal in the drought.
 - **Rubric:** Baseline (20%) + Benchmarking (20%)
-- **Talking point:** The strong classical baseline (exact DP) is the honest bar the quantum method is compared to.
-- **Pro/con:** Pro: valid metric + feasibility shown. Con: naive threshold rule looks good only if you ignore feasibility.
+- **Talking point:** Compare only feasible bars; exact DP is the honest strong baseline for the quantum comparison.
+- **Pro/con:** Pro: valid metric with feasibility made explicit. Con: naive threshold 'wins' only if you ignore the balance constraint it violates.
 
 ## D1 — Quantum vs baseline on the official benchmark  (`D1...png`)
 - **Proves:** full DP=-0.2904 ≥ DP-chunked=-0.3115 ≥ QAOA-chunked=-0.3563 (infeasible); chunking gap vs QAOA gap separated.
@@ -56,17 +64,17 @@
 - **Talking point:** QAOA reaches the optimum on debug (incl. real hardware); XY-mixer removes the one-hot penalty cleanly.
 - **Pro/con:** Pro: validated on hardware; XY-mixer principled. Con: AR degrades at p=1 as size grows.
 
-## D4 — Window robustness (E1)  (`D4...png`)
-- **Proves:** DP SRS varies modestly across windows; ranking of methods is stable.
+## D4 — Window robustness (E1) — DP vs historical per window  (`D4...png`)
+- **Proves:** ΔSRS(DP−hist): debug/small ≈ 0 in ALL windows (u=0 optimal, drought+coarse L); medium >0 in every window → the optimum is genuinely non-trivial there, not a start-of-year artifact.
 - **Rubric:** Benchmarking (20%)
-- **Talking point:** Results aren't an artifact of the start-of-year window; the benchmark is representative.
-- **Pro/con:** Pro: robustness shown across 3 windows. Con: all windows are within the same drought year.
+- **Talking point:** Windows: first=weeks[0,T); middle=start (52−T)//2; stress=T-week window of lowest mean storage (deepest deficit). Comparing DP to historical per window shows WHERE optimization actually helps.
+- **Pro/con:** Pro: separates 'found optimum' from 'optimum beats baseline' across windows. Con: all windows are within one drought year.
 
-## E1 — Scaling: search space vs DP tractability  (`E1...png`)
-- **Proves:** L^T from 243 (debug) to ~10⁴³ (large L7); DP runtime stays <0.3 s (polynomial O(T²L²)).
+## E1 — Scaling: L^T search space vs DP states explored (the collapse)  (`E1...png`)
+- **Proves:** medium L^T=1.49e18 → only 6,505 DP states (0.02s); large L7 8.81e43 → 49,739 states (0.20s). DP state=(t, C_t=Σk_j, k_prev): storage depends only on the integer cumulative sum C_t, so exponentially many schedules fuse into O(T²·L²) states — exact, lossless (brute==dp).
 - **Rubric:** Benchmarking (20%) — scaling analysis
-- **Talking point:** Exact DP makes the combinatorial problem tractable and gives ground truth at every size.
-- **Pro/con:** Pro: DP is the strong scalable baseline. Con: QAOA can't match DP's scaling (statevector limit).
+- **Talking point:** Exploiting optimal substructure turns a 10⁴³ search into ~10⁴ states: exact ground truth at every size.
+- **Pro/con:** Pro: DP is exact + sub-second at all scales. Con: it's a classical baseline; QAOA can't match its scaling.
 
 ## E2 — ΔSRS headroom by instance  (`E2...png`)
 - **Proves:** ΔSRS_vs_hist: debug/small≈0 (drought+coarse L), medium=+0.021, large=+0.051/+0.075.

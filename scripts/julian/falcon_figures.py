@@ -63,11 +63,16 @@ def _load():
     return df, wk, c
 
 
-def latest(df, instance, method, variant=None, window=False):
-    """Ultima fila (por timestamp) para (instance, method[, variant]); no-ventana por defecto."""
+def latest(df, instance, method, variant=None, window=False, L=None):
+    """Ultima fila (por timestamp) para (instance, method[, variant][, L]); no-ventana por defecto.
+
+    `L` desambigua large (T52/L5 vs T52/L7), que comparten instance='large'.
+    """
     m = (df["instance"] == instance) & (df["method"] == method)
     if variant is not None:
         m &= (df["variant"].astype(str) == variant)
+    if L is not None:
+        m &= (df["L"] == L)
     if not window:
         m &= ~(df["window_label"].astype(str).str.len() > 0)
     sub = df[m].sort_values("timestamp")
@@ -164,27 +169,31 @@ def fig_A1_A3_constraints(wk, c):
 
 
 def fig_A4_encoding_qubits():
-    """Qubits por encoding vs instancia, con el techo de statevector."""
-    names, oh, bina = [], [], []
+    """Qubits por encoding (one-hot / binary / domain-wall) vs instancia, con techo statevector."""
+    names, oh, bina, dw = [], [], [], []
     for T, L, name in INSTANCES:
         names.append(f"{name}\nT{T}/L{L}")
         oh.append(T * L)
         bina.append(T * math.ceil(math.log2(L)))
-    x = np.arange(len(names)); wdt = 0.38
-    fig, ax = plt.subplots(figsize=(8.5, 4.2))
-    ax.bar(x - wdt / 2, oh, wdt, label="one-hot (T·L)", color="#1f77b4")
-    ax.bar(x + wdt / 2, bina, wdt, label="binary (T·⌈log₂L⌉)", color="#ff7f0e")
-    ax.axhline(26, color="#d62728", ls="--", lw=1.3, label="statevector ceiling (~26 qubits)")
+        dw.append(T * (L - 1))                       # domain-wall: L-1 bits/semana
+    x = np.arange(len(names)); wdt = 0.27
+    fig, ax = plt.subplots(figsize=(9, 4.3))
+    ax.bar(x - wdt, oh, wdt, label="one-hot (T·L)", color="#1f77b4")
+    ax.bar(x, dw, wdt, label="domain-wall (T·(L−1)) — used on IBM HW", color="#2ca02c")
+    ax.bar(x + wdt, bina, wdt, label="binary (T·⌈log₂L⌉)", color="#ff7f0e")
+    ax.axhline(30, color="#d62728", ls="--", lw=1.3, label="statevector / HW block ceiling (~30 qubits)")
     ax.set(xticks=x, ylabel="qubits (full instance)",
-           title="Encoding sizing vs statevector limit → binary + chunking are necessary")
+           title="Encoding sizing vs ~30-qubit limit → compact encodings + chunking are necessary")
     ax.set_xticklabels(names, fontsize=8)
-    ax.legend(fontsize=8)
+    ax.legend(fontsize=7.5)
     save(fig, "A4_encoding_qubits")
-    note("A4", "Qubit count by encoding",
-         "one-hot medium=130q, large=260q; binary halves it but still >26 → chunking needed.",
+    note("A4", "Qubit count by encoding (one-hot / domain-wall / binary)",
+         "medium T26/L5: one-hot=130q, domain-wall=104q, binary=78q — all >30 → chunking. Ivan's IBM "
+         "hardware run used domain-wall (4 bits/week) in blocks 7+7+7+5 (≤30q).",
          "Quantum Impl. (25%) — justifies encoding + chunking choices",
-         "Compact encodings and per-block chunking are what make statevector QAOA feasible.",
-         "Pro: binary fits small in statevector. Con: binary exact only for L≤4; medium needs chunking.")
+         "Compact encodings + per-block chunking are what make QAOA fit a real device / statevector.",
+         "Pro: domain-wall enabled the actual IBM-hardware run; binary fits small in statevector. "
+         "Con: binary exact only for L≤4; every full instance still needs chunking.")
 
 
 def fig_A5_penalty_sweep(wk, c):
@@ -267,31 +276,47 @@ def fig_C1_srs_bars(df, wk, c):
     for ax, (T, L, name) in zip(axes, INSTANCES):
         inst = "large" if name.startswith("large") else name
         bars = []
-        h = latest(df, inst, "historical"); bars.append(("hist", h))
-        tp = latest(df, inst, "threshold", "pure"); bars.append(("thr-pure", tp))
-        tb = latest(df, inst, "threshold", "balanced"); bars.append(("thr-bal", tb))
-        d = latest(df, inst, "dp"); bars.append(("DP", d))
-        q = pick(latest(df, inst, "qaoa"), latest(df, inst, "qaoa_chunked"),
-                 latest(df, inst, "qubo_exhaustive"))
+        h = latest(df, inst, "historical", L=L); bars.append(("hist", h))
+        tp = latest(df, inst, "threshold", "pure", L=L); bars.append(("thr-pure", tp))
+        tb = latest(df, inst, "threshold", "balanced", L=L); bars.append(("thr-bal", tb))
+        d = latest(df, inst, "dp", L=L); bars.append(("DP", d))
+        q = pick(latest(df, inst, "qaoa", L=L), latest(df, inst, "qaoa_chunked", L=L),
+                 latest(df, inst, "qubo_exhaustive", L=L))
         if q is not None:
             bars.append(("quantum", q))
-        bars = [(lab, r) for lab, r in bars if r is not None and (L == r["L"])]
+        bars = [(lab, r) for lab, r in bars if r is not None]
         if not bars:
             ax.set_visible(False); continue
-        vals = [r["SRS"] for _, r in bars]
-        cols = ["#2ca02c" if bool(r["feasible"]) else "#d62728" for _, r in bars]
-        ax.bar([lab for lab, _ in bars], vals, color=cols)
+        labs = [lab for lab, _ in bars]
+        vals = [float(r["SRS"]) for _, r in bars]
+        feas = [bool(r["feasible"]) for _, r in bars]
+        # feasible = verde solido; infeasible = rojo con hachurado (no comparar su altura)
+        best_feas = max((v for v, fe in zip(vals, feas) if fe), default=None)
+        cont = ax.bar(labs, vals, color=["#2ca02c" if fe else "#d62728" for fe in feas])
+        for bar, fe, v in zip(cont, feas, vals):
+            if not fe:
+                bar.set_hatch("////"); bar.set_edgecolor("white")
+                ax.text(bar.get_x() + bar.get_width() / 2, v, "INFEASIBLE\n(over budget)",
+                        ha="center", va="top", fontsize=6, color="#7a0000")
+            elif best_feas is not None and abs(v - best_feas) < 1e-9:
+                ax.text(bar.get_x() + bar.get_width() / 2, v, "★ best\nfeasible",
+                        ha="center", va="bottom", fontsize=6.5, color="#0a5a0a")
         ax.set_title(f"{name} T{T}/L{L}", fontsize=9)
         ax.tick_params(axis="x", labelsize=7, rotation=35)
         ax.axhline(0, color="k", lw=0.6)
     axes[0].set_ylabel("SRS (higher = better)")
-    fig.suptitle("SRS by method (green=feasible, red=INFEASIBLE) — DP dominates; threshold-pure is infeasible", y=1.02)
+    fig.suptitle("SRS by method — compare heights ONLY among feasible (solid green) bars. "
+                 "Hatched red = INFEASIBLE: 'better' SRS only by overspending the balance budget |Σu|≤B.",
+                 y=1.03, fontsize=9)
     save(fig, "C1_srs_by_method")
-    note("C1", "SRS comparison per instance",
-         "DP ≥ all feasible baselines; threshold-pure/clamped are infeasible (balance violated).",
+    note("C1", "SRS comparison per instance (feasibility-aware)",
+         "Among FEASIBLE methods, DP ≥ historical ≥ threshold-balanced; threshold-pure/clamped look "
+         "higher (e.g. medium −0.289) but are INFEASIBLE (|Σu|−B>0). Feasible-but-worse-than-hist "
+         "(debug/small threshold-balanced) is legitimate — u=0 is optimal in the drought.",
          "Baseline (20%) + Benchmarking (20%)",
-         "The strong classical baseline (exact DP) is the honest bar the quantum method is compared to.",
-         "Pro: valid metric + feasibility shown. Con: naive threshold rule looks good only if you ignore feasibility.")
+         "Compare only feasible bars; exact DP is the honest strong baseline for the quantum comparison.",
+         "Pro: valid metric with feasibility made explicit. Con: naive threshold 'wins' only if you "
+         "ignore the balance constraint it violates.")
 
 
 # ---------- D. Quantum & benchmarking --------------------------------------- #
@@ -359,54 +384,95 @@ def fig_D2_approx_ratio(df):
 
 
 def fig_D4_windows(df):
-    """Robustez de ventana: SRS de DP en first/middle/stress por instancia."""
+    """Robustez de ventana: DP vs historical por ventana (first/middle/stress), con ΔSRS.
+
+    ΔSRS = SRS_DP − SRS_hist por ventana: 0 => el optimo es u=0 (sin headroom, sequia);
+    >0 => el DP encuentra una politica no trivial. Muestra si el optimo es no trivial en
+    cada ventana, no solo el valor de SRS.
+    """
+    def _srs(inst, method, wl):
+        sub = df[(df["instance"] == inst) & (df["method"] == method) & (df["window_label"] == wl)]
+        return float(sub["SRS"].iloc[-1]) if len(sub) else np.nan
+
     order = ["first", "middle", "stress"]
     insts = ["debug", "small", "medium"]
-    fig, ax = plt.subplots(figsize=(8.5, 4.2))
-    x = np.arange(len(insts)); wdt = 0.25
-    for k, wl in enumerate(order):
-        vals = []
-        for inst in insts:
-            sub = df[(df["instance"] == inst) & (df["method"] == "dp") & (df["window_label"] == wl)]
-            vals.append(float(sub["SRS"].iloc[-1]) if len(sub) else np.nan)
-        ax.bar(x + (k - 1) * wdt, vals, wdt, label=wl)
-    ax.set(xticks=x, ylabel="DP SRS", title="Window robustness: DP optimum across first/middle/stress windows")
-    ax.set_xticklabels(insts)
-    ax.legend(fontsize=8, title="window")
+    fig, axes = plt.subplots(1, len(insts), figsize=(13, 4.4), sharey=False)
+    for ax, inst in zip(axes, insts):
+        x = np.arange(len(order)); wdt = 0.38
+        hist = [_srs(inst, "historical", wl) for wl in order]
+        dp = [_srs(inst, "dp", wl) for wl in order]
+        ax.bar(x - wdt / 2, hist, wdt, label="historical (u=0)", color="#7f7f7f")
+        ax.bar(x + wdt / 2, dp, wdt, label="DP optimum", color="#1f77b4")
+        for xi, (hv, dv) in enumerate(zip(hist, dp)):
+            if not (np.isnan(hv) or np.isnan(dv)):
+                d = dv - hv
+                ax.annotate(f"ΔSRS\n{d:+.4f}", (xi, max(hv, dv)), ha="center", va="bottom",
+                            fontsize=7, color=("#0a5a0a" if d > 1e-9 else "#555555"))
+        ax.set_title(f"{inst}", fontsize=10)
+        ax.set_xticks(x); ax.set_xticklabels(order, fontsize=8)
+        if ax is axes[0]:
+            ax.set_ylabel("SRS (higher = better)")
+        ax.legend(fontsize=7)
+    fig.suptitle("Window robustness: DP vs historical per window (ΔSRS>0 ⇒ non-trivial optimum found). "
+                 "first=weeks[0,T)  ·  middle=start (52−T)//2  ·  stress=lowest-mean-storage window",
+                 y=1.03, fontsize=9)
     save(fig, "D4_window_robustness")
-    note("D4", "Window robustness (E1)",
-         "DP SRS varies modestly across windows; ranking of methods is stable.",
+    note("D4", "Window robustness (E1) — DP vs historical per window",
+         "ΔSRS(DP−hist): debug/small ≈ 0 in ALL windows (u=0 optimal, drought+coarse L); medium >0 in "
+         "every window → the optimum is genuinely non-trivial there, not a start-of-year artifact.",
          "Benchmarking (20%)",
-         "Results aren't an artifact of the start-of-year window; the benchmark is representative.",
-         "Pro: robustness shown across 3 windows. Con: all windows are within the same drought year.")
+         "Windows: first=weeks[0,T); middle=start (52−T)//2; stress=T-week window of lowest mean storage "
+         "(deepest deficit). Comparing DP to historical per window shows WHERE optimization actually helps.",
+         "Pro: separates 'found optimum' from 'optimum beats baseline' across windows. Con: all windows "
+         "are within one drought year.")
 
 
 # ---------- E. Scaling ------------------------------------------------------- #
+# Estados DP explorados (medido, snapshot 2026-06-30, docs/ANALISIS_DP_Y_RESULTADOS.md §3).
+DP_STATES = {("debug", 5, 3): 100, ("small", 12, 3): 433, ("medium", 26, 5): 6505,
+             ("large", 52, 5): 25086, ("large7", 52, 7): 49739}
+
+
 def fig_E1_scaling(df):
-    """Espacio de busqueda L^T (log) vs runtime DP: exponencial vs polinomial."""
-    names, spaces, rts = [], [], []
+    """Colapso exponencial->polinomial: espacio L^T vs estados DP realmente explorados."""
+    names, spaces, states, rts = [], [], [], []
     for T, L, name in INSTANCES:
         inst = "large" if name.startswith("large") else name
-        r = latest(df, inst, "dp")
-        if r is None or int(r["L"]) != L:
+        r = latest(df, inst, "dp", L=L)
+        if r is None:
+            continue
+        st_cnt = DP_STATES.get((name, T, L))
+        if st_cnt is None:
             continue
         names.append(f"{name}\nT{T}/L{L}")
-        spaces.append(L ** T)
-        rts.append(float(r["runtime_seconds"]))
-    fig, ax = plt.subplots(figsize=(8.5, 4.3))
-    ax.bar(names, [math.log10(s) for s in spaces], color="#1f77b4", label="log₁₀(L^T) candidate schedules")
-    ax.set_ylabel("log₁₀(search space)")
+        spaces.append(L ** T); states.append(st_cnt); rts.append(float(r["runtime_seconds"]))
+    x = np.arange(len(names))
+    fig, ax = plt.subplots(figsize=(9, 4.6))
+    ax.plot(x, [math.log10(s) for s in spaces], "-o", color="#d62728", lw=2,
+            label="log₁₀(L^T) candidate schedules (brute)")
+    ax.plot(x, [math.log10(s) for s in states], "-s", color="#1f77b4", lw=2,
+            label="log₁₀(DP states actually explored)")
+    for xi, sp, stt in zip(x, spaces, states):
+        ax.annotate(f"{sp:.0e}", (xi, math.log10(sp)), fontsize=7, color="#d62728",
+                    ha="center", va="bottom")
+        ax.annotate(f"{stt:,}", (xi, math.log10(stt)), fontsize=7, color="#1f77b4",
+                    ha="center", va="top")
+    ax.set(xticks=x, ylabel="log₁₀(count)",
+           title="DP collapses the search: L^T→10⁴³ candidates, but only ~10⁴ states explored (O(T²L²))")
+    ax.set_xticklabels(names, fontsize=8)
+    ax.legend(fontsize=8, loc="center left")
     ax2 = ax.twinx()
-    ax2.plot(names, rts, "-o", color="#d62728", label="DP runtime (s)")
-    ax2.set_ylabel("DP runtime (s)", color="#d62728")
-    ax.set_title("Search space explodes (L^T up to 10⁴³) but exact DP stays sub-second")
-    ax.tick_params(axis="x", labelsize=8)
+    ax2.plot(x, rts, ":^", color="#2ca02c", label="DP runtime (s)")
+    ax2.set_ylabel("DP runtime (s)", color="#2ca02c")
+    ax2.tick_params(axis="y", labelcolor="#2ca02c")
     save(fig, "E1_scaling")
-    note("E1", "Scaling: search space vs DP tractability",
-         "L^T from 243 (debug) to ~10⁴³ (large L7); DP runtime stays <0.3 s (polynomial O(T²L²)).",
+    note("E1", "Scaling: L^T search space vs DP states explored (the collapse)",
+         "medium L^T=1.49e18 → only 6,505 DP states (0.02s); large L7 8.81e43 → 49,739 states (0.20s). "
+         "DP state=(t, C_t=Σk_j, k_prev): storage depends only on the integer cumulative sum C_t, so "
+         "exponentially many schedules fuse into O(T²·L²) states — exact, lossless (brute==dp).",
          "Benchmarking (20%) — scaling analysis",
-         "Exact DP makes the combinatorial problem tractable and gives ground truth at every size.",
-         "Pro: DP is the strong scalable baseline. Con: QAOA can't match DP's scaling (statevector limit).")
+         "Exploiting optimal substructure turns a 10⁴³ search into ~10⁴ states: exact ground truth at every size.",
+         "Pro: DP is exact + sub-second at all scales. Con: it's a classical baseline; QAOA can't match its scaling.")
 
 
 def fig_E2_dsrs(df):
@@ -414,8 +480,8 @@ def fig_E2_dsrs(df):
     names, ds = [], []
     for T, L, name in INSTANCES:
         inst = "large" if name.startswith("large") else name
-        r = latest(df, inst, "dp")
-        if r is None or int(r["L"]) != L or pd.isna(r["dSRS_vs_historical"]):
+        r = latest(df, inst, "dp", L=L)
+        if r is None or pd.isna(r["dSRS_vs_historical"]):
             continue
         names.append(f"{name}\nT{T}/L{L}"); ds.append(float(r["dSRS_vs_historical"]))
     fig, ax = plt.subplots(figsize=(8, 4.2))
@@ -462,7 +528,19 @@ def fig_F1_policy(wk, c):
 def write_notes():
     lines = ["# Figure notes — Falcon presentation\n",
              "> Generado por `scripts/julian/falcon_figures.py`. Cada figura: qué prueba, rúbrica, "
-             "talking point y pro/con. PNGs en `results/figures/`.\n"]
+             "talking point y pro/con. PNGs en `results/figures/`.\n",
+             "## Feasibility explainer (para C1 / D1 / D4)\n",
+             "Una política `u(t)` es **factible** solo si cumple las **4 restricciones oficiales**: "
+             "`R(t)=R_obs+u≥0`, `|u(t)|≤u_max`, `0≤S(t)≤S_max`, y **`|Σu(t)|≤B=η·ΣR_obs`** (presupuesto "
+             "de balance). En nuestros datos las primeras tres casi nunca atan: **la que decide "
+             "factibilidad es el balance**. *Factibilidad y SRS son ejes independientes*: una política "
+             "puede ser factible y peor que el histórico (p.ej. threshold-balanced en debug/small — "
+             "legítimo, en sequía `u=0` ya es óptimo), y una **infactible puede tener un SRS más alto "
+             "solo por gastar de más el presupuesto** (p.ej. threshold-pure en medium, −0.289, pero "
+             "`|Σu|−B>0`). **Regla de lectura: comparar SRS solo entre barras factibles.**\n",
+             "## Definición de ventanas (para D4)\n",
+             "*first* = semanas `[0,T)`; *middle* = start `(52−T)//2`; *stress* = la ventana de T "
+             "semanas con **menor storage medio** (déficit más profundo, la más exigente).\n"]
     for n in NOTES:
         lines += [f"## {n['id']} — {n['title']}  (`{n['id'].replace('/','_')}...png`)",
                   f"- **Proves:** {n['proves']}",
