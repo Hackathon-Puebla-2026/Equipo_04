@@ -27,3 +27,10 @@ Conclusiones decisivas del trabajo de ivan y emilio. Detalle completo: `docs/RES
 
 - **Pesos de penalización sin calibrar** (one-hot/balance se violan en ivan; λ enorme con w~1e-18 en
   emilio). Pendiente barrido de sensibilidad antes de confiar en resultados.
+
+- ⚠️ **`qubo_sa` y `qubo_exhaustive` son solvers CLÁSICOS sobre el QUBO** (numpy: Metropolis /
+  enumeración `X@Q`), **NO** simulación cuántica. El campo `n_qubits` (p. ej. 135 en T26/L5) cuenta
+  **variables binarias del QUBO** (one-hot 26×5 + slacks), no qubits cuánticos simulados; por eso
+  135 "qubits" corren en <1 s (un statevector de 135 qubits, `2^135`, sería imposible). **Aún no se
+  corrió ningún algoritmo cuántico ni quantum-inspired** (QAOA = Fase 3, pendiente). Detalle:
+  `docs/ANALISIS_DP_Y_RESULTADOS.md`.

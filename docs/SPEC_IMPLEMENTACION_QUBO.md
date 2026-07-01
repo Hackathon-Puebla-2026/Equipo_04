@@ -172,8 +172,12 @@ scripts/
 - [ ] `C_crit` Opción B (slacks déficit/superávit) en `falcon_qubo.py`.
 - [ ] Restricciones exactas con slacks (balance, cotas de storage).
 - [ ] Encoding **domain-wall** (`T·(L−1)` bits) en `falcon_encodings.py`.
-- [ ] Encoding **binary/log** (`T·⌈log₂L⌉` bits; necesario para que la instancia chica entre en
-  statevector, §10).
+- [x] Encoding **binary/log** (`T·⌈log₂L⌉` bits; necesario para que la instancia chica entre en
+  statevector, §10). *Done (2026-07-01):* `falcon_encodings.py::BinaryVarIndex` + `build_binary_var_index`;
+  `build_qubo` despacha por encoding (validez=penalizar codewords inválidos `l≥L`, release-prohibit y
+  balance agnósticos vía `balance_M_expr`/`add_codeword_penalty`); exacto para `b≤2` (L≤4). Validado:
+  roundtrip, gate energía==−SRS (`3e-14`), y **mínimo global == DP\*** en T5/L3. T12/L3 = 24 qubits (vs
+  36 one-hot). Sin regresión en one-hot (gate + `exhaustive==dp` OK). Ver `docs/ANALISIS_DP_Y_RESULTADOS.md` §9.
 - [ ] **XY-mixer** para eliminar la penalización one-hot (Fase 3 lo usa).
 - [ ] *Done de cada variante:* reproduce el mismo SRS para el mismo `u` decodificado.
 - [ ] **E2 (clásico) - chunking temporal**: `chunked_optimize(R, dS, S0, T, n_chunks, L, balance_split,
@@ -189,14 +193,18 @@ scripts/
 
 ### Fase 3: cuántico + escalamiento
 
-- [ ] **`falcon_qaoa.py`** :: `Q → to_quadratic_program → Ising → QAOA` en simulador, instancia chica,
+- [x] **`falcon_qaoa.py`** :: `Q → to_quadratic_program → Ising → QAOA` en simulador, instancia chica,
   CPU local → GPU/MPS en WCentroid. Reusar `docs/georgia_qubo_snippets.md`
   (`build_quadratic_program`, `precompute_diagonal`, `build_qaoa_circuit`). Convenciones: seed 42,
-  ≥5 restarts si `Q` mal condicionada, schema JSON unificado. *Done:* energía QAOA == costo clásico en
-  muestras; decodifica + verifica factibilidad.
-- [ ] **Benchmark/escala**: tablas ΔSRS vs baselines (DP, histórico, umbral), runtime y escala
-  T12→T26→T52 → `results/<name>/...json`. *Done:* tabla reproducible; comparación cuántico vs DP
-  significativa.
+  ≥5 restarts si `Q` mal condicionada, schema JSON unificado. *Done (2026-07-01):* **Qiskit + Aer
+  statevector** (`.venv-quantum`, py3.12); circuito manual RZ/RZZ/RX; `<H>`+muestreo desde statevector
+  + diagonal precomputada; COBYLA, seed 42, ≥5 restarts, transpile-once. Gate energía==−SRS `~1e-15`;
+  `H_ising`==`diag−const` `1e-14`. Decodifica + verifica factibilidad (top-256). Ver `docs/…RESULTADOS.md` §9.
+- [~] **Benchmark/escala**: tablas ΔSRS vs baselines (DP, histórico, umbral), runtime y escala
+  T12→T26→T52 → `results/`. *Parcial (2026-07-01):* `falcon_run_qaoa.py` corre y registra debug T5/L3
+  (one-hot, 17q, **AR 1.000**) y small T12/L3 (binary, 24q, AR 1.31, factible). Tabla en §9. **Falta**
+  T26/T52 (no entran en statevector → MPS/sampling o chunking E2). Calibración de penalties (§8):
+  hecha, no es la palanca (maxabs absorbe el multiplicador); la palanca es profundidad/XY-mixer.
 - [ ] **E1 - robustez de ventana**: `falcon_run_windows.py` (o extensión del runner) corre cada método
   (historical, threshold pure/clamped/balanced, dp, brute si enumerable) en **3 ventanas por instancia**
   (excepto T52 que ocupa todo el año): `first` (start=0), `middle` (start=(52-T)//2), `stress` (auto:

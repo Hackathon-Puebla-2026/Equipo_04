@@ -95,6 +95,30 @@ Entradas en m^3 desde `data/processed/falcon_weekly_benchmark.csv`; constantes o
 falta el dataset oficial `Discharge.Total.Change-in-Storage@08461200`, por eso todo se marca
 `preliminary`.
 
+## 6.5. Aclaración: los solvers QUBO de Fase 1 son CLÁSICOS (no simulación cuántica)
+
+> Importante para no malinterpretar los resultados: en `results/runs/` hay corridas `qubo_sa` y
+> `qubo_exhaustive` con un campo `n_qubits` (p. ej. **135** en T26/L5). Eso **no** es una simulación
+> cuántica. Son solvers **clásicos** (numpy) sobre la matriz `Q` del QUBO.
+
+- **`qubo_sa`** (`scripts/falcon_solvers.py:98`): **simulated annealing clásico** (Metropolis). El
+  estado son **26 enteros de nivel** (`lv`), no un statevector; cada paso cambia el nivel de una
+  semana y evalúa la energía `H(x)=xᵀQx+const` (`scripts/falcon_qubo.py:42`), con `Q` una matriz
+  135×135. Son ~135² flops por paso × ~60 000 pasos ≈ **sub-segundo**. Nada exponencial.
+- **`qubo_exhaustive`** (`scripts/falcon_solvers.py:47`): enumeración **vectorizada** de las `L^T`
+  combinaciones factibles (`X@Q` por lotes). También clásico; `simulator: "numpy_exhaustive"`.
+- **"qubit" aquí = variable binaria del QUBO** (one-hot `T·L` + slacks de balance), no un qubit
+  cuántico simulado. Un statevector de 135 qubits ocuparía `2^135·16 B` → físicamente imposible;
+  por eso justamente NO se está simulando eso. El annealing clásico es polinomial por paso y esquiva
+  la explosión `L^T=5^26≈1.5e18` con un paseo aleatorio sesgado (no la enumera).
+- **Estado del repo: cero corridas cuánticas o quantum-inspired.** QAOA es **Fase 3** y sigue
+  pendiente (`docs/SPEC_IMPLEMENTACION_QUBO.md` §"Fase 3"; los `*Done:*` de esa sección son
+  criterios de terminación, no logros). Los `simulator` registrados son `numpy_sa`,
+  `numpy_exhaustive` o `None`.
+- **Contraste (repo hermano Georgia):** ahí **sí** se corrió cuántico *simulado* -QAOA en Qiskit Aer
+  statevector (≤20 qubits) y MPS tensor-network (≤50 qubits, χ=32), más variantes CVaR/noisy/VQE-. Es
+  la maquinaria que Fase 3 debe portar acá; hoy todavía no se ejecutó.
+
 ## 7. Pendiente
 
 - **MILP** (opcional): óptimo exacto independiente para verificar el DP en medium (donde brute es
@@ -156,4 +180,44 @@ Crece **logarítmico** en T (`M_cap≈0.4·T`, bits `≈log₂(0.8·T)`): 6 qubi
 `T·L`. **Recomendación: usar el balance EXACTO de 1 slack** (`balance="slack"`), no el soft
 `P_bal(Σu)²`. El soft cuesta 0 qubits pero es aproximado (sesga `Σu→0`, no impone `|Σu|≤B`); solo
 conviene como atajo de MVP. El balance exacto es correcto y prácticamente gratis.
+
+## 9. QAOA (Fase 3) - primer cuántico simulado (2026-07-01)
+
+Primer algoritmo **cuántico simulado** del repo (contrasta con §6.5: SA/exhaustive eran clásicos).
+`scripts/falcon_qaoa.py` + driver `falcon_run_qaoa.py`, con **Qiskit + Aer statevector** (correr con
+`.venv-quantum/bin/python`, Python 3.12). Circuito QAOA manual (`|+>ⁿ`; por capa: costo RZ/RZZ desde
+`qp.to_ising()`, mixer RX), COBYLA sobre `<H>`, seed=42 con ≥5 restarts, transpile 1 vez + bind de
+params. `<H>` y muestreo se calculan desde el statevector + diagonal QUBO precomputada (mismo indexado,
+sin reversos de endianness). Solo statevector (n≲26 qubits); instancias grandes → MPS/sampling.
+
+**Validaciones (todas pasan):** diagonal precomputada == `qubo_energy` (exacto); `H_ising` del circuito
+== `diag−const` a `1e-14` (el circuito optimiza exactamente el landscape que mido); gate energía
+`·scale == −SRS` a `~1e-15`; y para el **binary encoding** el mínimo global sobre `2ⁿ` es válido +
+factible y `== DP*` (0 estados por debajo del óptimo → los codewords inválidos quedan bien penalizados).
+
+**Binary encoding (Fase 2):** `l∈{0..L-1}` en `⌈log₂L⌉` bits/semana (`u` lineal en bits con niveles
+equiespaciados). Necesario para que **T12/L3 entre en statevector: 24 qubits binary vs 36 one-hot**.
+Exacto en QUBO para `b≤2` (L≤4); codewords inválidos (`l≥L`) se penalizan con producto de bits. Cambiar
+de encoding toca solo la capa `falcon_encodings.py` (los términos de costo no cambian).
+
+**Resultados (ΔSRS = SRS_qaoa − SRS_baseline; `hist=DP*` en estas ventanas: u=0 ya es óptimo):**
+
+| Instancia | encoding | p | n_qubits | SRS_qaoa | DP\* | AR | factible | runtime |
+|---|---|---:|---:|---:|---:|---:|---|---:|
+| debug T5/L3 | one-hot | 1 | 17 | −0.276985 | −0.276985 | **1.000** | sí | 2.5 s |
+| debug T5/L3 | one-hot | 2 | 17 | −0.276985 | −0.276985 | **1.000** | sí | 9.5 s |
+| small T12/L3 | binary | 1 | 24 | −0.389293 | −0.296264 | 1.314 | sí | 189 s |
+
+- **debug (17 q): QAOA alcanza el óptimo** (AR 1.000) a p=1. (Requiere muestrear top-256 por
+  probabilidad al decodificar: el óptimo tiene solo ~0.2% de probabilidad, un top-64 lo perdía.)
+- **small (24 q): QAOA factible pero subóptimo** (AR 1.31, prob del óptimo ~5e-6): el límite de
+  profundidad p=1 se nota al escalar. Mejorarlo: mayor p con init INTERP (naive p=2 no ayuda),
+  o **XY-mixer** (restringe al subespacio factible y elimina la penalización one-hot).
+- **Calibración de penalties (spec §8, `falcon_calibrate_penalties.py`):** barrer el multiplicador de
+  penalties `∈{0.1..10}` **no mueve** el resultado en debug. Motivo: `normalize="maxabs"` reescala `Q`
+  por su máximo (dominado por las penalties), así que multiplicarlas se cancela al normalizar. El
+  cuello no es el condicionamiento por escala de penalty sino la **profundidad/mixer**.
+- Consistente con el spec §7: no se busca ventaja cuántica; el objetivo es codificar/benchmarkear.
+  Sigue todo `preliminary` (falta el `ΔS_obs` oficial). Registrado en `results/runs_summary.csv`
+  (`method="qaoa"`, con `p_depth/beta/gamma/optimizer_iterations`).
 
