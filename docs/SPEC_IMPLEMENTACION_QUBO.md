@@ -228,10 +228,13 @@ scripts/
   por-bloque (DP → nuestro `falcon_qaoa.run_qaoa`); cada bloque = QUBO chico que entra en statevector.
   *Done (2026-07-01):* runner `falcon_run_chunked.py`, `method="qaoa_chunked"`. **T26/L5 bloques de 5 =
   25 qubits/bloque** corre **QAOA REAL** (no el fallback silencioso de Ivan): 4/6 bloques factibles, 2
-  reportados infactibles explícitamente. QAOA-chunked = −0.356259 (**infactible**, gap_vs_full 0.066):
-  peor que DP-chunked por el límite p=1 + balance soft por-bloque que deriva el balance global.
-  Descomposición de gap (chunking 0.021 + QAOA 0.045). Honesto y consistente con spec §7 (sin ventaja
-  cuántica). Ver §10. Mejorar: `global_greedy`, mayor p (init INTERP), XY-mixer, balance duro por bloque.
+  reportados infactibles explícitamente. QAOA-chunked (RX+penalización) = −0.356259 (**infactible**,
+  gap_vs_full 0.066): el balance soft por-bloque dejaba muestras fuera del one-hot y derivaba el balance
+  global. **Mejora (2026-07-01): con `mixer="xy"` (XY-mixer) el chunked-QAOA de medium es FACTIBLE** —
+  cada bloque muestrea solo one-hot válido, así que respeta `B_blk` y, por `eta_local`, el balance
+  global. Números finales en `results/runs_summary.csv` (`qaoa_chunked/blk5_p1_xy`) y figura
+  `results/figures/D1_quantum_vs_baseline_medium.png`. Descomposición de gap (chunking vs QAOA), spec §7
+  (sin ventaja cuántica). Ver §10. Falta afinar: `global_greedy` para superar al histórico factible.
 - [ ] **Writeup (rúbrica 1 y 5)**: formulación del problema + SDG 6.4/6.5/13.1 + impacto + literatura;
   pros/cons; nota de uso de IA; slides en inglés. *Done:* cubre los 5 criterios de la rúbrica.
 
