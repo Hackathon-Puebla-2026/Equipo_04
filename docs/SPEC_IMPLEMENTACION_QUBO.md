@@ -184,16 +184,16 @@ scripts/
   36 one-hot). Sin regresión en one-hot (gate + `exhaustive==dp` OK). Ver `docs/ANALISIS_DP_Y_RESULTADOS.md` §9.
 - [ ] **XY-mixer** para eliminar la penalización one-hot (Fase 3 lo usa).
 - [ ] *Done de cada variante:* reproduce el mismo SRS para el mismo `u` decodificado.
-- [ ] **E2 (clásico) - chunking temporal**: `chunked_optimize(R, dS, S0, T, n_chunks, L, balance_split,
-  link_smooth=True)`. Parte T en n chunks de ~T/n; secuencial: `S0_i`=storage final del chunk i-1,
-  `k_prev_init`=último nivel del chunk i-1 (linkea `C_smooth`); presupuesto de balance por chunk según
-  `balance_split ∈ {"eta_local", "global_greedy"}` (**comparar ambos**). Concatena `u`, evalúa SRS y
-  factibilidad sobre todo T con los módulos canónicos, y compara con el DP full -> **gap de
-  optimalidad**. Requiere extender `dp_optimal` con `k_prev_init: int|None=None`. Registrar
-  `method="dp_chunked"`, `variant=f"n{n}_{split}"`, guardando `gap_vs_full` y `qubits_por_chunk=(T/n)·L`.
-  *Done:* tabla `gap_vs_full` por (n, split) en small y medium; documentar trade-off optimalidad vs
-  qubits/chunk. (Rolling-horizon; solo el balance global rompe optimalidad, ver
-  `docs/ANALISIS_DP_Y_RESULTADOS.md`.)
+- [x] **E2 (clásico) - chunking temporal**: `scripts/falcon_chunked.py::staged_solve(..., solver="dp")`.
+  Parte T en bloques de `block_size`; secuencial: `S0_blk`=storage final del bloque previo,
+  `k_prev_init`=último nivel del previo (linkea `C_smooth`); balance por bloque `balance_split ∈
+  {"eta_local","global_greedy"}`. Concatena `u`, evalúa SRS/factibilidad global con los módulos
+  canónicos, y `gap_vs_full` vs `dp_optimal` global. *Done (2026-07-01):* `dp_optimal` extendido con
+  `k_prev_init`; `build_qubo` con `u_prev` (frontera C_smooth, validado Δenergía==w3·(u₀−u_prev)²).
+  **Hallazgo T26/L5 bloques de 5:** DP-chunked (eta_local) = −0.311534 = histórico, con **gap_vs_full
+  = 0.021**: el troceo con balance por-bloque **NO alcanza el óptimo global** (full DP −0.290423 SÍ es
+  no trivial) porque la redistribución óptima cruza fronteras de bloque dentro del η global. → probar
+  `global_greedy` / bloques más grandes. Ver `docs/ANALISIS_DP_Y_RESULTADOS.md` §10.
 
 ### Fase 3: cuántico + escalamiento
 
@@ -215,9 +215,14 @@ scripts/
   ventana de T semanas con menor storage medio o mayor varianza). Agregar campo `window_start` /
   `window_label` al esquema de `falcon_results.py` y al `run_id` (evita colisiones). *Done:* tabla que
   muestra la variación de SRS/ΔSRS/factibilidad entre ventanas; concluir si `first` es representativa.
-- [ ] **E2 (cuántico) - chunking en QUBO/QAOA**: reusar `chunked_optimize` cambiando el solver por-chunk
-  (DP → QAOA); cada chunk = QUBO chico que sí entra en statevector (`(T/n)·L` qubits). *Done:*
-  energía/coste por chunk validado; SRS concatenado vs DP full; qubits/chunk reportados.
+- [x] **E2 (cuántico) - chunking en QUBO/QAOA**: `staged_solve(..., solver="qaoa")` cambia el solver
+  por-bloque (DP → nuestro `falcon_qaoa.run_qaoa`); cada bloque = QUBO chico que entra en statevector.
+  *Done (2026-07-01):* runner `falcon_run_chunked.py`, `method="qaoa_chunked"`. **T26/L5 bloques de 5 =
+  25 qubits/bloque** corre **QAOA REAL** (no el fallback silencioso de Ivan): 4/6 bloques factibles, 2
+  reportados infactibles explícitamente. QAOA-chunked = −0.356259 (**infactible**, gap_vs_full 0.066):
+  peor que DP-chunked por el límite p=1 + balance soft por-bloque que deriva el balance global.
+  Descomposición de gap (chunking 0.021 + QAOA 0.045). Honesto y consistente con spec §7 (sin ventaja
+  cuántica). Ver §10. Mejorar: `global_greedy`, mayor p (init INTERP), XY-mixer, balance duro por bloque.
 - [ ] **Writeup (rúbrica 1 y 5)**: formulación del problema + SDG 6.4/6.5/13.1 + impacto + literatura;
   pros/cons; nota de uso de IA; slides en inglés. *Done:* cubre los 5 criterios de la rúbrica.
 

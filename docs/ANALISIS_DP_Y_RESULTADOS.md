@@ -218,6 +218,38 @@ de encoding toca solo la capa `falcon_encodings.py` (los términos de costo no c
   por su máximo (dominado por las penalties), así que multiplicarlas se cancela al normalizar. El
   cuello no es el condicionamiento por escala de penalty sino la **profundidad/mixer**.
 - Consistente con el spec §7: no se busca ventaja cuántica; el objetivo es codificar/benchmarkear.
-  Sigue todo `preliminary` (falta el `ΔS_obs` oficial). Registrado en `results/runs_summary.csv`
-  (`method="qaoa"`, con `p_depth/beta/gamma/optimizer_iterations`).
+  Registrado en `results/runs_summary.csv` (`method="qaoa"`, con `p_depth/beta/gamma/optimizer_iterations`).
+
+## 10. QAOA por etapas / chunking (E2) - escala a T26/L5 (2026-07-01)
+
+Para pasar del límite de statevector (~26 qubits) a la instancia oficial T26/L5, se implementó un
+**solver por etapas / horizonte recedente** (`scripts/falcon_chunked.py::staged_solve`,
+runner `falcon_run_chunked.py`): parte T en bloques (L=5, **5 semanas → 25 qubits/bloque**), resuelve
+cada bloque con **nuestro QAOA real** (`falcon_qaoa.run_qaoa`, statevector) o DP, arrastra el storage,
+linkea `C_smooth` entre bloques (`u_prev`/`k_prev_init`), reparte el balance (`eta_local`) y evalúa
+SRS/factibilidad **global** con los módulos canónicos. Es la reimplementación limpia del "batch" de
+ivan (cuyo QAOA en realidad **nunca corrió**: crasheaba en `qiskit_algorithms` y caía a búsqueda
+local; ver [[teammate-notebooks-are-reference]]).
+
+**Descomposición de gap (T26/L5, bloques de 5, `eta_local`, link_smooth):**
+
+| método | SRS | gap_vs_full | factible | notas |
+|---|---:|---:|---|---|
+| full DP (óptimo global) | −0.290423 | 0 | sí | óptimo NO trivial (bate al histórico) |
+| DP-chunked | −0.311534 | **0.021** | sí | = histórico; pierde la ventaja del DP |
+| QAOA-chunked | −0.356259 | **0.066** | **no** | 4/6 bloques QAOA factibles; 645 s |
+| histórico u=0 | −0.311534 | | sí | |
+
+- **QAOA REAL, sin fallback silencioso:** 4/6 bloques resueltos por QAOA factible; **2 bloques
+  reportados infactibles explícitamente** (no se enmascaran, a diferencia de ivan). QAOA sí elige `u≠0`
+  (p.ej. niveles `[0,1,1,4,4]`), pero a p=1 + balance soft por-bloque el resultado global queda peor
+  e infactible (el balance global se sale).
+- **El troceo pierde optimalidad (gap 0.021):** el full DP bate al histórico (−0.290 vs −0.311), pero
+  DP-chunked con `eta_local` **empata al histórico** → la redistribución óptima cruza fronteras de
+  bloque dentro del η **global**, y trocear con balance por-bloque no la puede realizar. Mejorar:
+  `global_greedy`, bloques más grandes, o balance global-aware.
+- **Gap total = chunking (0.021) + QAOA (0.045).** Consistente con spec §7 (sin ventaja cuántica): el
+  valor es el método + benchmark honesto + descomposición, no ganarle al DP.
+- Mejoras QAOA (comunes con §9): mayor p con init INTERP, **XY-mixer** (subespacio factible, elimina
+  penalización one-hot), balance duro por bloque. Registrado `method="qaoa_chunked"`.
 
