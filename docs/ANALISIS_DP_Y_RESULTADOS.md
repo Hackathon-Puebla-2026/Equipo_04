@@ -36,9 +36,13 @@ Referencia primaria del ΔSRS = `SRS_hist` (histórico `u=0`). Números de `resu
 | large | 52 | 7 | -0.252702 | -0.188453 (infactible) | -0.177643 | n/a | +0.075059 | Sí |
 
 Notas:
-- La **regla de umbral es infactible** por balance en todas las instancias (reduce más de lo permitido
-  por `|Σu| ≤ η·ΣR_obs`); su SRS a veces parece mejor solo por violar esa restricción. El DP es el
-  mejor **factible**. La variante clamped solo cambia en large (evita `R<0`), sin volverse factible.
+- La **regla de umbral pura es infactible** por balance en todas las instancias (reduce más de lo
+  permitido por `|Σu| ≤ η·ΣR_obs`); su SRS a veces parece mejor solo por violar esa restricción. El DP
+  es el mejor **factible**. La variante clamped solo cambia en large (evita `R<0`), sin volverse factible.
+- La **regla de umbral balanceada** (variante de ivan, `threshold/balanced`) detiene la reducción al
+  llegar al presupuesto de balance -> es **factible en todas las instancias** y `≤ DP`. En **medium
+  coincide con el DP** (`-0.290423`). SRS balanceada por instancia: debug -0.301065, small -0.320233,
+  medium -0.290423, large L5 -0.206566, large L7 -0.200622.
 - En debug/small el óptimo factible es `u=0` (ΔSRS 0): con `u_max=Δu` en L=3 la desviación es cara y
   no compensa; a mayor horizonte (medium/large) el DP sí mejora al histórico.
 - `brute_force == dp` donde el brute es enumerable (debug, small), confirmando el óptimo.
@@ -96,4 +100,5 @@ falta el dataset oficial `Discharge.Total.Change-in-Storage@08461200`, por eso t
 - **MILP** (opcional): óptimo exacto independiente para verificar el DP en medium (donde brute es
   imposible, `5^26≈1.5e18`). Ver spec `docs/SPEC_IMPLEMENTACION_QUBO.md` (Opcionales).
 - **QUBO/QAOA** (Fase 1+): el DP es el ground truth para validar la energía y el óptimo.
-- Métodos extra de ivan por incorporar: regla de umbral balanceada y annealing quantum-inspired.
+- Métodos extra de ivan: regla de umbral balanceada **ya incorporada** (`threshold/balanced`);
+  annealing quantum-inspired pendiente.

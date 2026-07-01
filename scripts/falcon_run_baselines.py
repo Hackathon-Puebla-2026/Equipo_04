@@ -57,6 +57,12 @@ def run_instance(df, constants, T: int, L: int) -> None:
     dt_c = time.perf_counter() - t0
     Sc, cc, srs_c = _evaluate(uc, S0, dS_T, S_min, w)
 
+    # threshold balanceada (variante de ivan, factible en balance)
+    t0 = time.perf_counter()
+    ub = bl.threshold_rule(R_T, dS_T, S0, S_min, p["delta_u"], B=B)
+    dt_b = time.perf_counter() - t0
+    Sb, cb, srs_b = _evaluate(ub, S0, dS_T, S_min, w)
+
     # 4) DP exacto (baseline clasico fuerte / ground truth)
     t0 = time.perf_counter()
     dp = bl.dp_optimal(R_T, dS_T, S0, S_min=S_min, S_max=S_max,
@@ -84,6 +90,8 @@ def run_instance(df, constants, T: int, L: int) -> None:
                    feasibility=chk(ut, Stt), runtime_seconds=dt_t, **common)
     res.record_run(method="threshold", variant="clamped", u=uc, S=Sc, costs=cc, srs=srs_c,
                    feasibility=chk(uc, Sc), runtime_seconds=dt_c, **common)
+    res.record_run(method="threshold", variant="balanced", u=ub, S=Sb, costs=cb, srs=srs_b,
+                   feasibility=chk(ub, Sb), runtime_seconds=dt_b, **common)
     res.record_run(method="dp", u=u_dp, S=Sdp, costs=dp["costs"], srs=dp["SRS_star"],
                    feasibility=chk(u_dp, Sdp), runtime_seconds=dt_dp, **common)
 
@@ -97,9 +105,10 @@ def run_instance(df, constants, T: int, L: int) -> None:
             f"brute != dp en {instance}: {bf['SRS_star']} vs {dp['SRS_star']}"
         bf_txt = f"{bf['SRS_star']:.4e} (==dp OK)"
 
+    bal_feas = chk(ub, Sb)["feasible"]
     print(f"[{instance:7s} T={T:2d} L={L}] hist={srs_h:.4e}  thr_pure={srs_t:.4e}  "
-          f"thr_clamp={srs_c:.4e}  dp={dp['SRS_star']:.4e} (dSRS {dp['SRS_star']-srs_h:+.2e})  "
-          f"brute={bf_txt}")
+          f"thr_bal={srs_b:.4e}(feas={bal_feas})  dp={dp['SRS_star']:.4e} "
+          f"(dSRS {dp['SRS_star']-srs_h:+.2e})  brute={bf_txt}")
 
 
 def main() -> None:

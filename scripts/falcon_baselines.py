@@ -23,7 +23,8 @@ def historical(T: int) -> np.ndarray:
 
 
 def threshold_rule(R_obs, deltaS, S0: float, S_min: float, delta_u: float,
-                   clamp_release: bool = False) -> np.ndarray:
+                   clamp_release: bool = False, B: float | None = None,
+                   tol: float = 1e-6) -> np.ndarray:
     """Regla de conservacion por umbral del spec (ecs. 18-19):
 
         u_rule(t) = -delta_u  si S_rule(t) <  S_min
@@ -33,17 +34,25 @@ def threshold_rule(R_obs, deltaS, S0: float, S_min: float, delta_u: float,
     defecto es FIEL al PDF (sin clamp), por lo que puede producir R(t)<0 en
     semanas de muy bajo caudal. Con ``clamp_release=True`` se aplica el limite
     fisico ``u >= -R_obs(t)`` (variante factible, opt-in).
+
+    Si se pasa ``B`` (presupuesto de balance = eta*sum(R_obs)), se activa la
+    variante **balanceada** (de ivan): detiene la reduccion cuando aplicar otra
+    ``-delta_u`` haria ``|sum u| > B``, quedando factible en balance.
     """
     R_obs = np.asarray(R_obs, dtype=float)
     deltaS = np.asarray(deltaS, dtype=float)
     T = len(R_obs)
     u = np.zeros(T, dtype=float)
     S = float(S0)
+    running = 0.0
     for t in range(T):
         ut = -delta_u if S < S_min else 0.0
         if clamp_release:
             ut = max(ut, -R_obs[t])      # mantener R(t) >= 0 (opt-in)
+        if B is not None and abs(running + ut) > B + tol:
+            ut = 0.0                     # balanceada: no reducir si rompe el balance
         u[t] = ut
+        running += ut
         S = S + deltaS[t] - ut
     return u
 

@@ -51,12 +51,12 @@ el objetivo**, pero no puede detectar que el objetivo (los pesos vía `u_max`) e
 comparación con ivan fue lo que expuso el bug. Con el `u_max` corregido, `brute == dp` sigue valiendo
 (en debug T5/L3 y small T12/L3, `brute == dp == ivan`).
 
-## Métodos de ivan que aún no tenemos
+## Métodos de ivan
 
-- **Regla de umbral balanceada** (detiene reducciones al llegar al límite de balance; factible, iguala
-  al DP en T26). Similar a nuestra idea de post-selección/factibilidad; candidata a agregar.
+- **Regla de umbral balanceada**: **ya incorporada** (`threshold/balanced` en `falcon_baselines.py`).
+  Factible en todas las instancias; en T26 coincide con el DP (`-0.290423`), igual que ivan.
 - **Annealing quantum-inspired** (`-0.291188` en T26): heurística tipo QUBO/Ising, no supera al DP en
-  esta ventana. Referencia para nuestra Fase 3 (QAOA).
+  esta ventana. Aún no la tenemos; referencia para nuestra Fase 3 (QAOA).
 
 ## Conclusión
 

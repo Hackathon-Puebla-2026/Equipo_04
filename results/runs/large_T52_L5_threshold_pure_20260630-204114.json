@@ -1,6 +1,6 @@
 {
-  "run_id": "large_T52_L5_threshold_pure_20260630-190142",
-  "timestamp": "20260630-190142",
+  "run_id": "large_T52_L5_threshold_pure_20260630-204114",
+  "timestamp": "20260630-204114",
   "owner": "",
   "method": "threshold",
   "variant": "pure",
@@ -19,7 +19,7 @@
   "weeks_below_Smin": 53,
   "release_balance_error": 89800273.65285873,
   "feasible": false,
-  "runtime_seconds": 7.000002369750291e-06,
+  "runtime_seconds": 7.458002073690295e-06,
   "delta_u": 3053171.405289538,
   "u_max": 6106342.810579076,
   "eta": 0.1,

@@ -1,6 +1,6 @@
 {
-  "run_id": "debug_T5_L3_threshold_clamped_20260630-190137",
-  "timestamp": "20260630-190137",
+  "run_id": "debug_T5_L3_threshold_clamped_20260630-204109",
+  "timestamp": "20260630-204109",
   "owner": "",
   "method": "threshold",
   "variant": "clamped",
@@ -19,7 +19,7 @@
   "weeks_below_Smin": 6,
   "release_balance_error": 6334500.819451139,
   "feasible": false,
-  "runtime_seconds": 3.1669987947680056e-06,
+  "runtime_seconds": 3.0840019462630153e-06,
   "delta_u": 2052946.9152623047,
   "u_max": 2052946.9152623047,
   "eta": 0.1,
