@@ -42,7 +42,7 @@ def staged_solve(weekly_release_m3, deltaS_all, S0: float, T: int, *,
                  S_min: float, S_max: float, L: int, block_size: int,
                  eta: float = 0.10, solver: str = "qaoa",
                  balance_split: str = "eta_local", link_smooth: bool = True,
-                 qaoa_kwargs: dict | None = None) -> dict:
+                 mixer: str = "x", qaoa_kwargs: dict | None = None) -> dict:
     """Resuelve por etapas y devuelve u global + SRS/factibilidad global + tabla por bloque.
 
     `weekly_release_m3` es el record completo de release (para Δu oficial de la ventana T);
@@ -75,7 +75,10 @@ def staged_solve(weekly_release_m3, deltaS_all, S0: float, T: int, *,
         B_blk = _block_budget(balance_split, eta, Rb, B_global, abs(running))
         u_prev = (k_prev * delta_u) if (link_smooth and k_prev is not None) else None
 
-        cfg = fcfg.FalconConfig(T=Tb, L=L, balance=block_balance)
+        # XY-mixer (mixer="xy") confina al subespacio one-hot => se omite la penalizacion
+        # one-hot en el Q y todo estado muestreado es one-hot valido (bloque factible fiable).
+        onehot = "xy_mixer" if (solver == "qaoa" and mixer == "xy") else "penalty"
+        cfg = fcfg.FalconConfig(T=Tb, L=L, balance=block_balance, onehot=onehot)
         Q, const, vi, meta = fq.build_qubo(
             cfg, Rb, dSb, S_cur, S_min=S_min, delta_u=delta_u, levels=levels,
             weights=weights, B=B_blk, u_prev=u_prev)
@@ -84,7 +87,7 @@ def staged_solve(weekly_release_m3, deltaS_all, S0: float, T: int, *,
             import falcon_qaoa as qa     # perezoso (requiere qiskit / .venv-quantum)
             out = qa.run_qaoa(Q, const, meta, vi, levels, Rb, dSb, S_cur, S_min=S_min,
                               S_max=S_max, u_max=u_max, B=B_blk, weights=weights, half=half,
-                              **qaoa_kwargs)
+                              mixer=mixer, **qaoa_kwargs)
             d = out["decoded"]
             u_blk = np.asarray(d["u"], dtype=float)
             row = {"method": "qaoa", "feasible": bool(d["feasible"]),
@@ -122,7 +125,7 @@ def staged_solve(weekly_release_m3, deltaS_all, S0: float, T: int, *,
             "feasible": bool(chk["feasible"]), "violations": chk["violations"],
             "blocks": blocks, "params": pr, "weights": weights, "B": B_global,
             "solver": solver, "block_size": block_size, "balance_split": balance_split,
-            "link_smooth": link_smooth,
+            "link_smooth": link_smooth, "mixer": mixer,
             "n_qaoa_blocks": sum(1 for b in blocks if b["method"] == "qaoa" and b["feasible"]),
             "n_blocks": len(blocks)}
 

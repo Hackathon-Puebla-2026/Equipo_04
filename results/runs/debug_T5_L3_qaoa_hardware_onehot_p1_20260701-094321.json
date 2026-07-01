@@ -1,0 +1,77 @@
+{
+  "run_id": "debug_T5_L3_qaoa_hardware_onehot_p1_20260701-094321",
+  "timestamp": "20260701-094321",
+  "owner": "",
+  "method": "qaoa_hardware",
+  "variant": "onehot_p1",
+  "instance": "debug",
+  "T": 5,
+  "L": 3,
+  "official_status": "preliminary",
+  "SRS": -0.27698499345001243,
+  "Ccrit": 1.1234219152982561e+18,
+  "Cdev": 0.0,
+  "Csmooth": 0.0,
+  "dSRS_vs_historical": 0.0,
+  "dSRS_vs_threshold": 0.09358091812966124,
+  "dSRS_vs_dp": 0.0,
+  "min_storage": 375611223.3226168,
+  "weeks_below_Smin": 6,
+  "release_balance_error": 0.0,
+  "feasible": true,
+  "runtime_seconds": 361.7043869495392,
+  "delta_u": 2052946.9152623047,
+  "u_max": 2052946.9152623047,
+  "eta": 0.1,
+  "S_max": 3288726000.0,
+  "S_min": 822181500.0,
+  "delta_u_full_ref": 3053171.405289538,
+  "w1": 2.4655473573922224e-19,
+  "w2": 4.745418908967719e-15,
+  "w3": 1.482943409052412e-15,
+  "encoding": "onehot",
+  "n_qubits": 17,
+  "p_depth": 1,
+  "energy": 0.049716002317250485,
+  "approximation_ratio": 1.0,
+  "seed": 42,
+  "simulator": "ibmq:ibm_fez",
+  "penalties": {
+    "onehot": 2.769849934500124,
+    "R": 2.769849934500124,
+    "bal_soft": 1.793161795737659e-13,
+    "bal_slack": 2.769849934500124
+  },
+  "beta": [
+    2.8861213721085033
+  ],
+  "gamma": [
+    0.41724971475043
+  ],
+  "optimizer_iterations": null,
+  "window_start": null,
+  "window_label": null,
+  "u": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "B": 3930233.756860384,
+  "violations": {
+    "release_negative": 0,
+    "u_exceeds_umax": 0,
+    "storage_out_of_bounds": 0,
+    "balance_excess": 0.0,
+    "min_release": 3319945.6702687973,
+    "min_storage": 375611223.3226168,
+    "max_storage": 402327751.1143201,
+    "abs_balance": 0.0
+  },
+  "references": {
+    "historical": -0.27698499345001243,
+    "threshold": -0.37056591157967367,
+    "dp": -0.27698499345001243
+  }
+}

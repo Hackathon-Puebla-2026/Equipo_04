@@ -89,19 +89,70 @@ def build_qaoa_circuit(n, singles, pairs, p):
     return qc, betas, gammas
 
 
+def _w_state_vector(L: int) -> np.ndarray:
+    """Estado W de L qubits: superposicion uniforme de las L cadenas one-hot.
+
+    Vector de largo 2^L con amplitud 1/√L en los indices {1,2,4,...,2^(L-1)}
+    (bit l encendido == qubit l del grupo == nivel l). Es el punto de partida del
+    XY-mixer: vive en el subespacio one-hot (peso de Hamming 1) por semana.
+    """
+    v = np.zeros(1 << L, dtype=complex)
+    for l in range(L):
+        v[1 << l] = 1.0
+    return v / np.sqrt(L)
+
+
+def build_qaoa_circuit_xy(n, singles, pairs, p, groups):
+    """Circuito QAOA con XY-mixer (subespacio one-hot), en vez del RX estandar.
+
+    - Init: estado W por semana (grupo de L qubits) -> arranca one-hot valido.
+    - Capa de costo: misma RZ/RZZ (el Q se construye SIN penalizacion one-hot).
+    - Mixer: anillo XY por semana `e^{-iβ Σ (X_jX_k+Y_jY_k)}` via RXX(2β)+RYY(2β)
+      sobre las aristas del anillo del grupo. Preserva peso de Hamming 1 => el estado
+      NUNCA sale del subespacio one-hot factible. `groups[t]` = qubits de la semana t.
+    """
+    from qiskit import QuantumCircuit
+    from qiskit.circuit import Parameter
+
+    betas = [Parameter(f"b{i}") for i in range(p)]
+    gammas = [Parameter(f"g{i}") for i in range(p)]
+    qc = QuantumCircuit(n)
+    for g in groups:                                   # init one-hot (estado W) por semana
+        qc.initialize(_w_state_vector(len(g)), list(g))
+    for beta, gamma in zip(betas, gammas):
+        for q, h in singles:
+            qc.rz(2.0 * gamma * h, q)
+        for q, r, J in pairs:
+            qc.rzz(2.0 * gamma * J, q, r)
+        for g in groups:                               # XY-mixer en anillo por semana
+            L = len(g)
+            edges = [(g[i], g[(i + 1) % L]) for i in range(L)] if L > 2 else [(g[0], g[1])]
+            for a, b in edges:
+                qc.rxx(2.0 * beta, a, b)
+                qc.ryy(2.0 * beta, a, b)
+    qc.save_statevector()
+    return qc, betas, gammas
+
+
 class _Sim:
     """AerSimulator statevector con el circuito parametrico transpilado UNA vez.
 
     Cada evaluacion bindea (β,γ) y corre; evita re-transpilar por iteracion (clave
-    para que T12/L3 = 24 qubits sea viable).
+    para que T12/L3 = 24 qubits sea viable). `mixer="xy"` usa el XY-mixer (requiere
+    `groups`, la particion de qubits one-hot por semana).
     """
 
-    def __init__(self, n, singles, pairs, p):
+    def __init__(self, n, singles, pairs, p, mixer="x", groups=None):
         from qiskit import transpile
         from qiskit_aer import AerSimulator
 
         self.backend = AerSimulator(method="statevector")
-        qc, self.betas, self.gammas = build_qaoa_circuit(n, singles, pairs, p)
+        if mixer == "xy":
+            if not groups:
+                raise ValueError("mixer='xy' requiere groups (qubits one-hot por semana)")
+            qc, self.betas, self.gammas = build_qaoa_circuit_xy(n, singles, pairs, p, groups)
+        else:
+            qc, self.betas, self.gammas = build_qaoa_circuit(n, singles, pairs, p)
         self.tqc = transpile(qc, self.backend)
         self.p = p
 
@@ -114,11 +165,17 @@ class _Sim:
 
 
 def run_qaoa(Q, const, meta, vi, levels, R_obs, dS, S0, *, S_min, S_max, u_max, B,
-             weights, half, p=1, restarts=5, seed=42, maxiter=200):
+             weights, half, p=1, restarts=5, seed=42, maxiter=200, mixer="x"):
     """Optimiza QAOA (COBYLA) sobre <H> y devuelve el mejor bitstring decodificado.
 
     <H> = Σ_x |ψ(x)|² · diag[x] (diagonal QUBO, mismo indexado que el statevector).
     Minimiza sobre (β,γ). Reusa `decode_and_verify` para factibilidad/SRS.
+
+    `mixer="xy"` usa el XY-mixer sobre el subespacio one-hot (requiere `vi` one-hot y
+    que el Q se haya construido con `onehot="xy_mixer"`, sin penalizacion one-hot ni
+    slacks -> todos los qubits pertenecen a una semana). Asi todo estado muestreado es
+    one-hot valido y el decode encuentra candidatos factibles (incl. balance) de forma
+    fiable. Con `mixer="x"` (default) es el QAOA RX estandar de siempre.
     """
     from scipy.optimize import minimize
 
@@ -126,10 +183,19 @@ def run_qaoa(Q, const, meta, vi, levels, R_obs, dS, S0, *, S_min, S_max, u_max, 
     if n > MAX_QUBITS_STATEVECTOR:
         raise ValueError(f"n={n} qubits excede el tope statevector ({MAX_QUBITS_STATEVECTOR})")
 
+    groups = None
+    if mixer == "xy":
+        if hasattr(vi, "bits"):
+            raise ValueError("mixer='xy' solo aplica a encoding one-hot (no binary)")
+        if n != vi.n:
+            raise ValueError(f"mixer='xy' requiere Q sin slacks (n={n} != vi.n={vi.n}); "
+                             "usar balance='soft' y onehot='xy_mixer'")
+        groups = [[vi.idx(t, l) for l in range(vi.L)] for t in range(vi.T)]
+
     diag = precompute_diagonal(Q, const)          # (2ⁿ,) energias QUBO por estado base
     e_min, e_max = float(diag.min()), float(diag.max())
     singles, pairs, _offset = _ising_terms(Q)
-    sim = _Sim(n, singles, pairs, p)
+    sim = _Sim(n, singles, pairs, p, mixer=mixer, groups=groups)
 
     def energies_of_params(params):
         psi = sim.statevector(params[:p], params[p:])

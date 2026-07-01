@@ -24,7 +24,7 @@ import falcon_srs as srs
 import falcon_storage as st
 
 
-def run(T=26, L=5, block_size=5, *, p=1, restarts=2, maxiter=60):
+def run(T=26, L=5, block_size=5, *, p=1, restarts=2, maxiter=60, mixer="xy"):
     df = fd.build_weekly_benchmark(write=False)
     c = fc.load_official_constants()
     Rall = df["R_obs_m3_week"].to_numpy()
@@ -33,10 +33,11 @@ def run(T=26, L=5, block_size=5, *, p=1, restarts=2, maxiter=60):
     Smin, Smax = c["S_min_m3"], c["S_max_m3"]
     R = Rall[:T]
 
-    # QAOA-chunked (real)
+    # QAOA-chunked (real). mixer="xy" -> XY-mixer (subespacio one-hot, bloque factible fiable);
+    # mixer="x" -> RX estandar con penalizacion one-hot (comportamiento previo).
     t0 = time.perf_counter()
     qc = ch.staged_solve(Rall, dSall, S0, T, S_min=Smin, S_max=Smax, L=L, block_size=block_size,
-                         eta=c["eta"], solver="qaoa", link_smooth=True,
+                         eta=c["eta"], solver="qaoa", link_smooth=True, mixer=mixer,
                          qaoa_kwargs={"p": p, "restarts": restarts, "maxiter": maxiter})
     rt = time.perf_counter() - t0
     w = qc["weights"]
@@ -62,11 +63,14 @@ def run(T=26, L=5, block_size=5, *, p=1, restarts=2, maxiter=60):
               "optimizer_iterations": None}
     res.record_run(method="qaoa_chunked", instance=res.instance_label(T, L), T=T, L=L,
                    params=qc["params"], weights=w, constants=c, B=qc["B"], u=qc["u"], S=qc["S"],
-                   costs=qc["costs"], srs=qc["SRS"], variant=f"blk{block_size}_p{p}",
+                   costs=qc["costs"], srs=qc["SRS"], variant=f"blk{block_size}_p{p}_{mixer}",
                    feasibility={"feasible": qc["feasible"], "violations": qc["violations"]},
                    runtime_seconds=rt, references=refs, solver=solver)
 
     # --- reporte ---
+    verdict = "FACTIBLE ✓" if qc["feasible"] else "INFACTIBLE ✗"
+    print(f"\n>>> QAOA-chunked T{T}/L{L} mixer={mixer}: {verdict} "
+          f"(ΔSRS_vs_hist={qc['SRS']-srs_h:+.3e}, ΔSRS_vs_dp={qc['SRS']-dp_full:+.3e})")
     print(f"\n=== QAOA por etapas (chunking) T{T}/L{L}, bloques de {block_size} ({nq} qubits/bloque) ===")
     print(f"{'metodo':22} {'SRS':>11} {'gap_vs_full':>12} {'feasible':>8}")
     print("-" * 56)
