@@ -78,13 +78,24 @@ terms:       {c_dev: bool, c_smooth: bool, c_crit: "soft" | "deficit_slack"}
 constraints: {onehot: "penalty" | "xy_mixer",
               balance: "soft" | "slack",
               release_nonneg: "prohibit" | "slack",
-              storage_bounds: "postselect" | "slack"}
+              storage_bounds: "drop" | "postselect" | "slack"}  # default "drop" (ver abajo)
 penalties:   {P_onehot, P_bal, P_R, P_crit, ...}   # auto-escala desde J_scale (§8)
 normalize:   "delta_u2" | "maxabs" | None
 ```
 
 Los términos de costo consumen solo "una expresión lineal de `u(t)`" que provee `falcon_encodings.py`,
 así cambiar el encoding toca solo 3 funciones, no los términos.
+
+**Defaults recomendados (justificados por datos, ver `docs/ANALISIS_DP_Y_RESULTADOS.md` §8):**
+- `storage_bounds = "drop"`: `0 ≤ S ≤ S_max` **nunca ata** -> no se codifica (0 qubits). Reactivar
+  solo si cambian datos/constantes y el storage se acerca a las cotas.
+- `balance = "slack"` (**preferir el exacto de 1 slack**, `M+s=M_cap`): cuesta solo `≈log₂(0.8·T)`
+  qubits (2-6 según instancia), es correcto y casi gratis. El `"soft"` `P_bal(Σu)²` (0 qubits) es
+  aproximado (sesga `Σu→0`); usarlo solo como atajo de MVP rápido.
+- `c_crit = "soft"` para el MVP (0 qubits, aproxima); `"deficit_slack"` (Opción B) solo en la versión
+  fiel (agrega `~2·T·b` qubits, el más caro).
+- `release_nonneg = "prohibit"` (nivel prohibido / penalización lineal, 0 slacks).
+- `onehot = "penalty"` en MVP; `"xy_mixer"` como variante (Fase 2/3).
 
 ---
 
@@ -142,10 +153,12 @@ scripts/
   `{var: coef}` + const); `linear_expr_storage(t)`. *Done:* `decode → u → re-encode` roundtrip exacto.
 - [ ] **`falcon_qubo.py`** :: `add_square_of_linear_expression(Q, const_ref, expr, weight)`
   (`(c+Σaᵢxᵢ)² = c² + Σ(2caᵢ+aᵢ²)xᵢ + 2Σ_{i<j}aᵢaⱼxᵢxⱼ`); `build_qubo(cfg, data) -> (Q, const,
-  var_index)` con el **set MVP** (`C_dev + C_smooth + soft-storage C_crit + one-hot penalty + soft
-  balance P_bal(Σu)² + release-prohibition P_R`; storage bounds por post-selección); normalización
-  interna (§3); `qubo_energy(Q, x, const)`; `to_quadratic_program(Q)`. *Done:* construye T12/L3 sin
-  error; nº vars = T·L.
+  var_index)`. **Set MVP con los defaults decididos (§4)**: `C_dev + C_smooth + soft-storage C_crit +
+  one-hot penalty + release-prohibition P_R`; **`storage_bounds="drop"`** (no se codifica, nunca ata);
+  **balance**: primer corte `soft P_bal(Σu)²` para validar el pipeline, luego cambiar a
+  **`balance="slack"` exacto de 1 slack** (`M+s=M_cap`, ~log₂ qubits, preferido). Normalización interna
+  (§3); `qubo_energy(Q, x, const)`; `to_quadratic_program(Q)`. *Done:* construye T12/L3 sin error;
+  nº vars = `T·L` (+ ~log₂ del slack de balance si exacto); sin slacks de storage.
 - [ ] **Gate de energía** (antes de cualquier QAOA): `xᵀQx + const == costo SRS decodificado` en
   varias bitstrings (patrón `verify_energy` de Georgia / validadores de emilio). *Done:* |Δ| < tol en
   ≥5 bitstrings; si falla, revisar signo/escala de `Q`.
@@ -163,6 +176,16 @@ scripts/
   statevector, §10).
 - [ ] **XY-mixer** para eliminar la penalización one-hot (Fase 3 lo usa).
 - [ ] *Done de cada variante:* reproduce el mismo SRS para el mismo `u` decodificado.
+- [ ] **E2 (clásico) - chunking temporal**: `chunked_optimize(R, dS, S0, T, n_chunks, L, balance_split,
+  link_smooth=True)`. Parte T en n chunks de ~T/n; secuencial: `S0_i`=storage final del chunk i-1,
+  `k_prev_init`=último nivel del chunk i-1 (linkea `C_smooth`); presupuesto de balance por chunk según
+  `balance_split ∈ {"eta_local", "global_greedy"}` (**comparar ambos**). Concatena `u`, evalúa SRS y
+  factibilidad sobre todo T con los módulos canónicos, y compara con el DP full -> **gap de
+  optimalidad**. Requiere extender `dp_optimal` con `k_prev_init: int|None=None`. Registrar
+  `method="dp_chunked"`, `variant=f"n{n}_{split}"`, guardando `gap_vs_full` y `qubits_por_chunk=(T/n)·L`.
+  *Done:* tabla `gap_vs_full` por (n, split) en small y medium; documentar trade-off optimalidad vs
+  qubits/chunk. (Rolling-horizon; solo el balance global rompe optimalidad, ver
+  `docs/ANALISIS_DP_Y_RESULTADOS.md`.)
 
 ### Fase 3: cuántico + escalamiento
 
@@ -174,12 +197,21 @@ scripts/
 - [ ] **Benchmark/escala**: tablas ΔSRS vs baselines (DP, histórico, umbral), runtime y escala
   T12→T26→T52 → `results/<name>/...json`. *Done:* tabla reproducible; comparación cuántico vs DP
   significativa.
+- [ ] **E1 - robustez de ventana**: `falcon_run_windows.py` (o extensión del runner) corre cada método
+  (historical, threshold pure/clamped/balanced, dp, brute si enumerable) en **3 ventanas por instancia**
+  (excepto T52 que ocupa todo el año): `first` (start=0), `middle` (start=(52-T)//2), `stress` (auto:
+  ventana de T semanas con menor storage medio o mayor varianza). Agregar campo `window_start` /
+  `window_label` al esquema de `falcon_results.py` y al `run_id` (evita colisiones). *Done:* tabla que
+  muestra la variación de SRS/ΔSRS/factibilidad entre ventanas; concluir si `first` es representativa.
+- [ ] **E2 (cuántico) - chunking en QUBO/QAOA**: reusar `chunked_optimize` cambiando el solver por-chunk
+  (DP → QAOA); cada chunk = QUBO chico que sí entra en statevector (`(T/n)·L` qubits). *Done:*
+  energía/coste por chunk validado; SRS concatenado vs DP full; qubits/chunk reportados.
 - [ ] **Writeup (rúbrica 1 y 5)**: formulación del problema + SDG 6.4/6.5/13.1 + impacto + literatura;
   pros/cons; nota de uso de IA; slides en inglés. *Done:* cubre los 5 criterios de la rúbrica.
 
 ### Opcionales / baselines extra (no bloquean el flujo QUBO)
 
-- [ ] **`falcon_milp.py` :: `milp_optimal(...)` (OPCIONAL)** — óptimo exacto **independiente** para
+- [ ] **`falcon_milp.py` :: `milp_optimal(...)` (OPCIONAL)**: óptimo exacto **independiente** para
   cross-check del DP, sobre todo en **medium (T26/L5)** donde brute force es imposible (`5^26≈1.5e18`).
   Modelo: `x_{t,ℓ}` binario one-hot (`Σ_ℓ x_{t,ℓ}=1`), `u_t=Σ_ℓ aₗ x_{t,ℓ}`, storage lineal en bits;
   `C_crit` linealizado con déficit `d_t≥0, d_t≥S_min−S_t` (min Σ d_t²  →  MIQP, o aprox. lineal Σ d_t

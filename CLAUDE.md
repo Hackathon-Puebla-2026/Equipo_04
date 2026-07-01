@@ -29,7 +29,8 @@ The repo is in an early/setup stage: it contains the challenge spec (PDF), data-
 - `docs/HALLAZGOS_CLAVE.md` — decision-critical digest of what ivan & emilio have done (data ready, preliminary-vs-official `S_max`/`S_min`, `Δu` convention, one-hot encodings, no QAOA yet). **Auto-imported** (always loaded).
 - `docs/RESUMEN_HALLAZGOS_EQUIPO.md` — full detailed summary of the team's EDA + preliminary QUBO work, with numbers, discrepancy table, and reusable-asset inventory. **On-demand** — read for the full picture.
 - `docs/SPEC_IMPLEMENTACION_QUBO.md` — **the active implementation spec**: locked conventions, module architecture (`scripts/falcon_*.py`), phased todo checklist with done-criteria, exact-lattice DP, rubric→tasks mapping. **On-demand** — read before/while coding any pipeline part.
-- `docs/ANALISIS_DP_Y_RESULTADOS.md` — DP complexity/timing analysis (states-explored vs `Lᵀ`, why sub-second is expected, lossless pruning) + current results digest (baselines/DP across instances, ΔSRS, feasibility, cross-validation vs ivan). **On-demand.** Raw data in `results/runs_summary.csv`.
+- `docs/ANALISIS_DP_Y_RESULTADOS.md` — DP complexity/timing analysis (states-explored vs `Lᵀ`, why sub-second is expected, lossless pruning) + current results digest (baselines/DP across instances, ΔSRS, feasibility, cross-validation vs ivan) + §8 qubit-scaling & droppable constraints. **On-demand.** Raw data in `results/runs_summary.csv`.
+- `docs/RENDIMIENTO_M4.md` — how to run performantly on this laptop (**CPU-first M4; GPU server unreliable**): backend choice (`lightning.qubit`), thread tuning, ~28-30 qubit memory ceiling, compact encoding + chunking, vectorized classical, env setup. **On-demand** — read before Fase 3 / any simulation.
 
 @docs/FalconChallenge_V6.md
 @docs/GUIDELINES.md
@@ -77,10 +78,10 @@ The official benchmark dataset is provided in a shared SharePoint folder (see `D
 
 ## Compute environments
 
-Two target machines:
+**CPU-first: the primary target is the M4 laptop.** The GPU server has availability problems, so do not depend on it. Full performance guidance: `docs/RENDIMIENTO_M4.md`.
 
-- **Local — MacBook Pro M4 (Apple Silicon).** No NVIDIA GPU. Use **CPU** simulators here: PennyLane `default.qubit`/`lightning.qubit`, Qiskit Aer `device="CPU"`. `lightning.gpu` and CUDA Quantum will NOT run locally (no CUDA); Aer has no Metal GPU backend. The many-core CPU is good for statevector-CPU sim and the precomputed-diagonal trick. Tune thread env vars to the core count (see `docs/georgia_qubo_snippets.md` §7).
-- **Remote GPU — WCentroid cluster.** Several NVIDIA GPUs including a **T4 (16 GB)**. CUDA is available here, so this is where `lightning.gpu`, Qiskit Aer `device="GPU"`, and CUDA Quantum (`nvidia` target) run. Use it for the larger/faster simulations.
+- **Local — MacBook Pro M4 (Apple Silicon), primary.** No NVIDIA GPU. Use **CPU** simulators: prefer PennyLane `lightning.qubit` (native ARM C++); Qiskit Aer `device="CPU"` only if wheels install (may need a Python 3.11/3.12 venv). `lightning.gpu`/CUDA Quantum do NOT run locally. Many-core CPU is good for statevector-CPU sim and the precomputed-diagonal trick. Tune thread env vars; avoid oversubscription (see `docs/RENDIMIENTO_M4.md`).
+- **Remote GPU — WCentroid cluster (unreliable, optional).** NVIDIA GPUs incl. a **T4 (16 GB)** where `lightning.gpu`/Aer-GPU/CUDA-Q *could* run, but availability is spotty — treat as a bonus, not a dependency. Keep device behind a flag so the same code runs CPU here and GPU there.
 
 **Memory reality (drives encoding + instance choices):** dense statevector uses `2ⁿ × 16 bytes`. A 16 GB GPU (T4) tops out around **~30 qubits**; the precomputed-diagonal array (`2ⁿ × 8 bytes`) is similar. Implications:
 - Small instance T12/L3: **one-hot = 36 qubits → too big for statevector**; domain-wall or binary = 24 qubits → fits (~256 MB). So compact encodings aren't just nicer, they're what makes exact statevector QAOA feasible.

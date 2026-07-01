@@ -102,3 +102,58 @@ falta el dataset oficial `Discharge.Total.Change-in-Storage@08461200`, por eso t
 - **QUBO/QAOA** (Fase 1+): el DP es el ground truth para validar la energía y el óptimo.
 - Métodos extra de ivan: regla de umbral balanceada **ya incorporada** (`threshold/balanced`);
   annealing quantum-inspired pendiente.
+
+## 8. Escalamiento de qubits del QUBO y restricciones eliminables
+
+> Snapshot 2026-06-30. Análisis para Fase 1+ (aún no construimos el QUBO). Motiva encodings compactos
+> y el experimento de chunking (E2, ver spec Fase 2/3).
+
+### 8.1 Qubits por encoding (bits de decisión)
+
+| Instancia | one-hot `T·L` | binary `T·⌈log₂L⌉` | domain-wall `T·(L-1)` |
+|---|---:|---:|---:|
+| small T12/L3 | 36 | 24 | 24 |
+| medium T26/L5 | 130 | 78 | 104 |
+| large T52/L5 | 260 | 156 | 208 |
+| large T52/L7 | 364 | 156 | 312 |
+
+Eso es solo decisión. Los **slacks de restricciones exactas** son lo que dispara el conteo (ivan
+T12/L5 = 278 vars, ~218 slacks). Contra el techo de statevector (~30 qubits, T4 16 GB), incluso el
+medium lean (130) queda lejos -> hacen falta encodings compactos y/o chunking.
+
+### 8.2 ¿Qué restricciones podemos quitar? (medido sobre nuestros datos)
+
+Por instancia, ¿cada restricción llega a atar?
+
+| Restricción (spec) | ¿Ata en nuestros datos? | Costo en qubits | Decisión |
+|---|---|---|---|
+| `0 ≤ S ≤ S_max` (ec. 10) | **NUNCA** (peor caso p.ej. `[55M,1125M]` en T52/L7 vs `[0,3289M]`) | slacks por semana (grande) | **QUITAR** |
+| `\|Σu\| ≤ B` (ec. 11) | **Sí, al límite** (DP usa ~99% de B en medium/large) | 0 (soft) / pocos bits (exacta) | mantener |
+| `R(t) ≥ 0` (ec. 8) | Parcial (1/8/20 niveles prohibidos en medium/large) | 0 (penalización lineal / nivel prohibido) | mantener (barato) |
+| `\|u\| ≤ u_max` (ec. 9) | Automática (niveles ⊂ `[-u_max,u_max]`) | 0 | por construcción |
+| one-hot (selección única) | Estructural | 0 (penalización) / mixer | mantener |
+
+**Conclusión:** con post-selección + términos soft + **quitar las cotas de storage**, el QUBO queda en
+**`T·L` qubits, cero slacks**. Solo el balance exacto o `C_crit` Opción B (déficit/superávit) agregan
+unos pocos. Es decir, para ESTOS datos el temido "las restricciones explotan los qubits" es evitable.
+Aun así, `T·L` en medium (130) supera el statevector -> ver encodings compactos (§8.1) y chunking (E2).
+
+### 8.3 Balance exacto: casi gratis (preferirlo sobre el soft)
+
+El balance es UNA restricción global, no por-semana. En unidades enteras `Σu = M·Δu`, `M=Σkₜ` entero,
+y `|Σu|≤B ⟺ |M| ≤ M_cap=⌊B/Δu⌋`. Con **un solo slack acotado** (`M+s=M_cap`, `s∈[0,2·M_cap]`,
+log-encoded) el costo es:
+
+| Instancia | `M_cap` | slack exacto (1 var) |
+|---|---:|---:|
+| debug T5/L3 | 1 | 2 qubits |
+| small T12/L3 | 4 | 4 qubits |
+| medium T26/L5 | 11 | 5 qubits |
+| large T52/L5 | 22 | 6 qubits |
+| large T52/L7 | 22 | 6 qubits |
+
+Crece **logarítmico** en T (`M_cap≈0.4·T`, bits `≈log₂(0.8·T)`): 6 qubits en el peor caso, `<3%` sobre
+`T·L`. **Recomendación: usar el balance EXACTO de 1 slack** (`balance="slack"`), no el soft
+`P_bal(Σu)²`. El soft cuesta 0 qubits pero es aproximado (sesga `Σu→0`, no impone `|Σu|≤B`); solo
+conviene como atajo de MVP. El balance exacto es correcto y prácticamente gratis.
+
