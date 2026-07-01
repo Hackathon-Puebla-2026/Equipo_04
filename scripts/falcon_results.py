@@ -35,6 +35,7 @@ CSV_COLUMNS = [
     "w1", "w2", "w3",
     "encoding", "n_qubits", "p_depth", "energy", "approximation_ratio", "seed",
     "simulator", "penalties",
+    "window_start", "window_label",
 ]
 
 
@@ -52,11 +53,14 @@ def instance_label(T: int, L: int) -> str:
 
 
 def make_run_id(instance: str, T: int, L: int, method: str,
-                variant: str | None, timestamp: str) -> str:
-    """run_id estandar: {instance}_T{T}_L{L}_{method}[_{variant}]_{timestamp}."""
+                variant: str | None, timestamp: str,
+                window_label: str | None = None) -> str:
+    """run_id estandar: {instance}_T{T}_L{L}_{method}[_{variant}][_{window}]_{timestamp}."""
     parts = [instance, f"T{T}", f"L{L}", method]
     if variant:
         parts.append(variant)
+    if window_label:
+        parts.append(window_label)
     parts.append(timestamp)
     return "_".join(parts)
 
@@ -68,11 +72,14 @@ def record_run(*, method: str, instance: str, T: int, L: int,
                variant: str | None = None, official_status: str = "preliminary",
                references: dict | None = None, solver: dict | None = None,
                owner: str = "", results_root: Path = RESULTS_ROOT,
-               timestamp: str | None = None) -> dict:
+               timestamp: str | None = None,
+               window_start: int | None = None,
+               window_label: str | None = None) -> dict:
     """Registra una corrida: escribe JSON por-corrida y agrega fila al CSV maestro.
 
     `references` = {"historical": srs_h, "threshold": srs_t, "dp": srs_dp} (opcional)
     llena las columnas dSRS_vs_*. `solver` = campos cuanticos (opcional).
+    `window_start`/`window_label` (opcional) etiquetan la ventana temporal (E1).
     Devuelve el record completo.
     """
     if timestamp is None:
@@ -82,7 +89,7 @@ def record_run(*, method: str, instance: str, T: int, L: int,
     references = references or {}
     solver = solver or {}
 
-    run_id = make_run_id(instance, T, L, method, variant, timestamp)
+    run_id = make_run_id(instance, T, L, method, variant, timestamp, window_label)
 
     def dsrs(ref_key):
         ref = references.get(ref_key)
@@ -129,6 +136,9 @@ def record_run(*, method: str, instance: str, T: int, L: int,
         "seed": solver.get("seed"),
         "simulator": solver.get("simulator"),
         "penalties": solver.get("penalties"),
+        # Ventana temporal (E1; null/"" para corridas de ventana unica start=0):
+        "window_start": None if window_start is None else int(window_start),
+        "window_label": window_label,
         # Detalle solo en JSON (no en CSV plano):
         "u": u.tolist(),
         "B": float(B),
@@ -146,8 +156,29 @@ def record_run(*, method: str, instance: str, T: int, L: int,
     return record
 
 
+def _migrate_summary_header(csv_path: Path) -> None:
+    """Si el CSV existe con un header viejo (!= CSV_COLUMNS), lo reescribe una vez
+    con el header nuevo, rellenando las columnas faltantes con "" en las filas
+    previas. Aditivo: no pierde datos ni cambia el orden de las columnas viejas.
+    """
+    if not csv_path.exists():
+        return
+    with csv_path.open("r", newline="", encoding="utf-8") as fh:
+        reader = csv.DictReader(fh)
+        old_cols = reader.fieldnames or []
+        if old_cols == CSV_COLUMNS:
+            return
+        old_rows = list(reader)
+    with csv_path.open("w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=CSV_COLUMNS)
+        writer.writeheader()
+        for r in old_rows:
+            writer.writerow({col: r.get(col, "") for col in CSV_COLUMNS})
+
+
 def _append_summary_row(csv_path: Path, record: dict) -> None:
     csv_path.parent.mkdir(parents=True, exist_ok=True)
+    _migrate_summary_header(csv_path)
     write_header = not csv_path.exists()
     row = {}
     for col in CSV_COLUMNS:
