@@ -59,12 +59,16 @@ def threshold_rule(R_obs, deltaS, S0: float, S_min: float, delta_u: float,
 
 def dp_optimal(R_obs, deltaS, S0: float, *, S_min: float, S_max: float,
                delta_u: float, L: int, weights: dict, B: float,
-               tol: float = 1e-6) -> dict:
+               tol: float = 1e-6, k_prev_init: int | None = None) -> dict:
     """Optimo exacto del problema discretizado por DP sobre el lattice entero.
 
     Devuelve {u_star, SRS_star, costs, feasible}. Maximiza SRS = minimiza
     J = w1*Ccrit + w2*Cdev + w3*Csmooth, con factibilidad dura (R>=0, cotas de
     storage, balance |sum u| <= B).
+
+    `k_prev_init` (opcional): nivel entero de la semana anterior a t=0, para linkear
+    el primer termino de C_smooth entre bloques (chunking; ver `falcon_chunked`).
+    None -> sin termino de suavidad en t=0 (comportamiento estandar).
     """
     R_obs = np.asarray(R_obs, dtype=float)
     deltaS = np.asarray(deltaS, dtype=float)
@@ -87,8 +91,9 @@ def dp_optimal(R_obs, deltaS, S0: float, *, S_min: float, S_max: float,
         return w1 * deficit * deficit
 
     # stages[t]: dict (C, k_prev) -> (cost_acumulado, parent_key, k_chosen)
+    # k_prev_init linkea C_smooth en t=0 con el bloque anterior (chunking); None = sin link.
     c0 = crit(0, 0)
-    stages = [{(0, None): (c0, None, None)}]
+    stages = [{(0, k_prev_init): (c0, None, None)}]
 
     for t in range(T):
         cur = stages[t]
@@ -104,7 +109,7 @@ def dp_optimal(R_obs, deltaS, S0: float, *, S_min: float, S_max: float,
                 if cadd == float("inf"):
                     continue
                 add = w2 * (delta_u * k) ** 2 + cadd
-                if t >= 1:
+                if k_prev is not None:               # C_smooth (t>=1, o t=0 si hay k_prev_init)
                     add += w3 * (delta_u * (k - k_prev)) ** 2
                 g2 = g + add
                 key = (C2, k)

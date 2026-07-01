@@ -56,8 +56,13 @@ def _historical_Jscale(S0, deltaS, S_min, weights, T) -> float:
 
 
 def build_qubo(cfg, R_obs, deltaS, S0: float, *, S_min: float, delta_u: float,
-               levels, weights: dict, B: float) -> tuple:
-    """Arma (Q, const, var_index, meta) segun cfg. Encodings: one-hot y binary."""
+               levels, weights: dict, B: float, u_prev: float | None = None) -> tuple:
+    """Arma (Q, const, var_index, meta) segun cfg. Encodings: one-hot y binary.
+
+    `u_prev` (opcional, m³): ajuste de la ultima semana del bloque anterior. Si se pasa,
+    agrega el termino de frontera de C_smooth `w3·(u_0 − u_prev)²` para linkear la suavidad
+    entre bloques (chunking; ver `falcon_chunked`). None -> comportamiento estandar.
+    """
     if cfg.encoding == "onehot":
         vi = fe.build_var_index(cfg.T, cfg.L)
     elif cfg.encoding == "binary":
@@ -105,6 +110,11 @@ def build_qubo(cfg, R_obs, deltaS, S0: float, *, S_min: float, delta_u: float,
         for t in range(1, T):
             expr = fe.add_exprs(fe.linear_expr_u(t, levels, vi),
                                 fe.scale_expr(fe.linear_expr_u(t - 1, levels, vi), -1.0))
+            const = add_square_of_linear_expression(Q, const, expr, w3)
+        # frontera entre bloques: w3·(u_0 − u_prev)² (chunking con link_smooth)
+        if u_prev is not None:
+            expr = fe.add_exprs(fe.linear_expr_u(0, levels, vi),
+                                {"constant": -float(u_prev), "linear": {}})
             const = add_square_of_linear_expression(Q, const, expr, w3)
 
     # --- C_crit (soft, exacto aqui) = w1 Σ_{t=0}^{T} (S_t - S_target)² ---

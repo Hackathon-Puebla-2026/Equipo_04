@@ -46,8 +46,12 @@ escalamiento. No dejar el writeup para el final.
   Además **registrar** el `Δu` de ventana completa (52 semanas) como referencia en la metadata de cada
   corrida. `u_max = 2Δu`, niveles `L=5: {−2,−1,0,1,2}·Δu`, `L=3: {−1,0,1}·Δu`.
 - **`S_obs(t)` = valor de cierre de semana** (último valor diario de la semana). `S0` = frontera
-  inicial. `ΔS_obs(t) = S(t+1) − S(t)`, **derivado** (falta dataset oficial) → todo resultado se marca
-  `preliminary`.
+  inicial. `ΔS_obs(t) = S(t+1) − S(t)` es el **driver**, ahora **cross-validado** contra el dataset
+  oficial `Discharge.Total.Change-in-Storage@08461200` (ya presente): a nivel semanal, derivado ==
+  **−(oficial)** EXACTO (corr +1.000, err≈0). ⚠️ El oficial usa **signo opuesto** (usado crudo, el
+  storage se va a negativo); por eso el driver sigue siendo el derivado. `ΔS` **deja de ser
+  preliminar**. Invariante: `falcon_data.validate_deltaS_vs_official`; detalle:
+  `docs/AUDITORIA_DATOS_Y_BRUTE.md`.
 - **Semanas: bins fijos de 7 días anclados al primer timestamp; se descarta el remanente parcial →
   52 semanas limpias.** (ivan tiene 53 por usar semanas calendario con bordes parciales; la diferencia
   es esperada y se explica al validar.)

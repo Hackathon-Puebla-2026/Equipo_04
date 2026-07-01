@@ -18,8 +18,14 @@ Conclusiones decisivas del trabajo de ivan y emilio. Detalle completo: `docs/RES
   **Decisión: fijar una convención única** (qué ventana, año completo vs por instancia) o los SRS no
   comparan entre integrantes.
 
-- **`ΔS_obs` es derivado** (`S(t+1)−S(t)`); falta el dataset oficial
-  `Discharge.Total.Change-in-Storage@08461200` → todo resultado es **preliminar**.
+- ✅ **`ΔS_obs` ya CROSS-VALIDADO contra el oficial.** El dataset oficial
+  `Discharge.Total.Change-in-Storage@08461200` (diario, 2020-2026) ya está en `FalconChallenge/data/`.
+  A nivel semanal, el derivado `S(t+1)−S(t)` == **−(suma semanal del oficial)** EXACTO (corr +1.000,
+  max|Δ|≈6e-8 m³). ⚠️ **El oficial usa signo OPUESTO** a la ec. de balance del spec: usado crudo, su
+  suma anual da −272M mientras el storage subió +273M, y `S_opt(u=0)` se va a ~3% de capacidad. Por eso
+  el **driver sigue siendo el derivado** (== oficial signo-corregido) y se **quita el flag
+  "preliminar"** de ΔS. Invariante en `falcon_data.validate_deltaS_vs_official`. Detalle:
+  `docs/AUDITORIA_DATOS_Y_BRUTE.md`.
 
 - **Encoding:** ambos usan **one-hot**. ivan = restricciones con **slacks exactos** (278 vars en
   T12/L5); emilio = **post-selección/filtrado de factibilidad** (130 vars en T26/L5). **QAOA:
@@ -34,3 +40,15 @@ Conclusiones decisivas del trabajo de ivan y emilio. Detalle completo: `docs/RES
   135 "qubits" corren en <1 s (un statevector de 135 qubits, `2^135`, sería imposible). **Aún no se
   corrió ningún algoritmo cuántico ni quantum-inspired** (QAOA = Fase 3, pendiente). Detalle:
   `docs/ANALISIS_DP_Y_RESULTADOS.md`.
+
+- ✅ **Auditoría por fuerza bruta (código/restricciones/datos) OK** (`scripts/julian/falcon_brute_audit.py`,
+  `docs/AUDITORIA_DATOS_Y_BRUTE.md`): brute correcto (2 implementaciones independientes coinciden en 41
+  ventanas T12/L3 + halla `u≠0` en casos plantados); restricciones == `check_constraints` (0/20000
+  discrepancias, **balance es la que ata**); datos OK (unidades y cross-check `S_obs/S_max` vs
+  %conservación **exacto**).
+
+- ⚠️ **Régimen de SEQUÍA (6 años): storage ~6-15% de capacidad, 0/2182 días sobre `S_min`.** Por eso el
+  **óptimo T12/L3 es `u=0` en TODAS las ventanas** (los ajustes acotados por `η=0.10` no mueven `C_crit`
+  lo suficiente y a L=3 el paso máximo es ±Δu). **Con L=5/T mayor el óptimo SÍ es no trivial** (T12/L5:
+  4-5 semanas `u≠0`, ΔSRS +2.7e-3..+4.8e-3; T26/L5 no trivial en las 27 ventanas). **Implicación: el
+  `ΔSRS` con headroom vive en L=5+ (medium/large), no en el debug T12/L3.**
