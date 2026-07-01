@@ -69,6 +69,34 @@ SRS por instancia para histórico/DP/QAOA-sim/QAOA-chunked/QAOA-hardware; hatch 
 enfoque cuántico con **chunks + relajaciones** (balance soft, XY-mixer, `eta_local`, post-selección)
 da soluciones **factibles y cerca del DP**; el hardware (T5/L3, AR=1.0) corre honesto.
 
+## Resultados en HARDWARE real (chunked-QAOA, ibm_kingston, 2026-07-01)
+
+Corridas recuperadas por `job_id` (`scripts/julian/falcon_hw_retrieve.py`); análisis en
+`results/julian/hw_analysis_*.json`, figuras `figHW1/2/3`. Registrado `method="qaoa_chunked_hardware"`.
+
+**small T12/L3** (3 bloques de 4 semanas = 12 qubits/bloque, XY-mixer, DD + gate/measure twirling,
+4096 shots): **SRS = −0.296264 = óptimo DP, FACTIBLE, AR = 1.000.**
+
+| bloque | one-hot válido en HW | muestras factibles | mejor SRS bloque |
+|---|---:|---:|---:|
+| 0 | 31.6% | 19 | −0.107 |
+| 1 | 31.2% | 71 | −0.110 |
+| 2 | 35.5% | 51 | −0.123 |
+
+- **figHW1** - el ruido de hardware tira **~⅔ de los shots fuera del subespacio one-hot** (solo ~32%
+  válido vs 100% en sim), pero el **XY-mixer mantiene esa fracción usable** y la **post-selección** se
+  queda con la mejor factible → bloque factible fiable.
+- **figHW2** - distribución de SRS de las muestras factibles por bloque (dispersa por ruido); se marca
+  la que eligió la post-selección.
+- **figHW3** - SRS HW-chunked vs DP/histórico: en small **el HW alcanza el óptimo** (en régimen de
+  sequía el óptimo es `u=0`, y aun con ruido se recupera factible). **Supera la corrida previa del
+  equipo** (T26/L5, −0.3322, **infactible**, sin mitigación, params heurísticos).
+- medium T26/L5 y large T52/L5: enviadas vía `falcon_hw_submit.py` (manifest
+  `results/julian/hw_jobs_manifest.json`); se recuperan con `falcon_hw_retrieve.py` al quedar DONE.
+
+**Lectura honesta:** no es speedup ni mejor SRS que el DP; es una **ejecución cuántica real,
+factible y mitigada**, con el análisis del impacto de ruido medido en la QPU.
+
 ## Por qué el chunking hace la diferencia (no el DP)
 
 El chunking ataca la **simulabilidad/ejecutabilidad del circuito**, no la complejidad del DP:

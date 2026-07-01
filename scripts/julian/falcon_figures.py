@@ -47,11 +47,20 @@ AUDITORIUM = os.environ.get("AUDITORIUM") == "1"
 if AUDITORIUM:
     FIGDIR = REPO / "presentation" / "figures"
     matplotlib.rcParams.update({
-        "font.size": 22, "axes.titlesize": 24, "axes.labelsize": 22,
+        "font.size": 21, "axes.titlesize": 22, "axes.labelsize": 21,
         "xtick.labelsize": 18, "ytick.labelsize": 18, "legend.fontsize": 18,
         "lines.linewidth": 3, "lines.markersize": 9, "figure.dpi": 150,
         "axes.titleweight": "bold", "font.weight": "medium",
     })
+    # Ensancha las figuras para que el area de plot llene el ancho (evita que el
+    # titulo grande expanda margenes con bbox tight y deje el plot chico y centrado).
+    _orig_subplots = plt.subplots
+    def _wide_subplots(*a, **k):
+        fs = k.get("figsize")
+        if fs is not None:
+            k["figsize"] = (fs[0] * 1.45, fs[1] * 1.12)
+        return _orig_subplots(*a, **k)
+    plt.subplots = _wide_subplots
 else:
     FIGDIR = REPO / "results" / "figures"
 
@@ -266,21 +275,36 @@ def fig_B1_deltaS(wk, c):
 
 
 def fig_B2_drought(wk, c):
-    """Storage como % de capacidad (1 año) con S_min(25%): regimen de sequia."""
+    """Storage observado como % de capacidad en la VENTANA DEL BENCHMARK (1 año, 52
+    semanas) con S_min(25%). El plot es el año con anclaje de storage observado; la
+    sequía multianual (2020-2026) se cita como contexto de auditoría separado, no como
+    la línea graficada (la reconstrucción a 6 años deriva y no sirve para storage
+    absoluto: ver docs/AUDITORIA_DATOS_Y_BRUTE.md)."""
     S = np.concatenate([[wk.attrs["S0_m3"]], wk["S_obs_m3"].to_numpy()]) / c["S_max_m3"] * 100
+    n_weeks = len(S) - 1
     fig, ax = plt.subplots(figsize=(8.5, 4.2))
     ax.fill_between(range(len(S)), 0, S, color="#8c564b", alpha=0.35)
-    ax.plot(range(len(S)), S, "-o", ms=3, color="#8c564b", label="storage (% capacity)")
+    ax.plot(range(len(S)), S, "-o", ms=3, color="#8c564b",
+            label=f"observed storage (% capacity), {n_weeks}-wk benchmark window")
     ax.axhline(25, color="#ff7f0e", ls="--", lw=1.5, label="S_min = 25% (conservation threshold)")
-    ax.set(xlabel="week", ylabel="% of S_max", ylim=(0, 30),
-           title="Multi-year drought: storage ~10–20% of capacity — 0/2182 days above S_min (6-yr audit)")
-    ax.legend(fontsize=8)
+    ax.set(xlabel="week", ylabel="% of S_max", xlim=(0, len(S) - 1), ylim=(0, 30),
+           title=f"Benchmark year ({n_weeks} wk): storage 10–20% of capacity — always below S_min (25%)")
+    # Contexto de sequía multianual: estadística de auditoría por integración de ΔS,
+    # NO la serie graficada (por eso va como anotación, no como línea).
+    ax.text(0.015, 0.04,
+            "Multi-year context (ΔS-integration audit, 2020–2026): 0/2182 days above S_min",
+            transform=ax.transAxes, fontsize=8, style="italic", color="#555555",
+            va="bottom", ha="left")
+    ax.legend(fontsize=8, loc="upper right")
     save(fig, "B2_drought_regime")
     note("B2", "Drought regime frames the problem",
-         "Storage 10–20% of S_max; 0 of 2182 days (2020–2026) above S_min → C_crit dominates the SRS.",
+         f"Benchmark year ({n_weeks} wk, observed anchor): storage 10–20% of S_max, always below S_min. "
+         "Multi-year audit (ΔS-integrated, 2020–2026) corroborates: 0/2182 days above S_min → C_crit dominates.",
          "Problem Formulation (25%) — societal/hydrological context",
-         "The reservoir is critically low all year, so avoiding deeper shortfall (C_crit) is the priority.",
-         "Pro: explains why u=0 optima appear at coarse L. Con: window is a drought; wetter years may differ.")
+         "The plotted year is critically low throughout; the 6-yr ΔS audit confirms it is a multi-year drought, "
+         "so avoiding deeper shortfall (C_crit) is the priority.",
+         "Pro: explains why u=0 optima appear at coarse L. Con: the reliable storage line is 1 year (the 6-yr "
+         "figure is a ΔS-integration audit, unreliable for absolute storage — see AUDITORIA_DATOS_Y_BRUTE).")
 
 
 # ---------- C. Baseline & correctness --------------------------------------- #
