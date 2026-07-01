@@ -1,6 +1,6 @@
 {
-  "run_id": "medium_T26_L5_threshold_pure_20260630-164135",
-  "timestamp": "20260630-164135",
+  "run_id": "medium_T26_L5_threshold_pure_20260630-190142",
+  "timestamp": "20260630-190142",
   "owner": "",
   "method": "threshold",
   "variant": "pure",
@@ -19,7 +19,7 @@
   "weeks_below_Smin": 27,
   "release_balance_error": 41763308.29937241,
   "feasible": false,
-  "runtime_seconds": 4.457993782125413e-06,
+  "runtime_seconds": 4.5000051613897085e-06,
   "delta_u": 2804362.4869818557,
   "u_max": 5608724.973963711,
   "eta": 0.1,

@@ -73,11 +73,15 @@ def instance_params(weekly_release_m3, T: int, L: int) -> dict:
     solo como referencia de sanidad cross-instancia (no se optimiza con el).
     """
     delta_u = compute_delta_u(weekly_release_m3, T=T)
+    half = (L - 1) // 2
+    # u_max = mayor magnitud de ajuste = half*delta_u (=max|niveles|). Da 2*delta_u
+    # para L=5 (oficial, spec ec. 11) y generaliza a L=3 (1*du) y L=7 (3*du),
+    # consistente con |u(t)| <= u_max y con la definicion de niveles.
     return {
         "T": T,
         "L": L,
         "delta_u": delta_u,
-        "u_max": 2.0 * delta_u,
+        "u_max": half * delta_u,
         "levels": adjustment_levels(delta_u, L),
         "delta_u_full_ref": compute_delta_u(weekly_release_m3, T=None),
     }

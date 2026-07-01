@@ -9,6 +9,8 @@ Todo en m^3. Reusa falcon_storage / falcon_srs para reconstruir y reportar.
 """
 from __future__ import annotations
 
+import itertools
+
 import numpy as np
 
 import falcon_srs as srs
@@ -129,4 +131,46 @@ def dp_optimal(R_obs, deltaS, S0: float, *, S_min: float, S_max: float,
     S = st.simulate_storage(S0, deltaS, u_star)
     costs = srs.compute_costs(S, u_star, S_min)
     srs_val = srs.compute_srs(costs, weights)
+    return {"u_star": u_star, "SRS_star": srs_val, "costs": costs, "feasible": bool(feasible)}
+
+
+def brute_force_optimal(R_obs, deltaS, S0: float, *, S_min: float, S_max: float,
+                        delta_u: float, L: int, weights: dict, B: float,
+                        max_combos: int = 600_000, tol: float = 1e-6) -> dict | None:
+    """Optimo por enumeracion exhaustiva de las L^T secuencias (arbitro neutral).
+
+    Filtra factibilidad dura (R>=0, 0<=S<=S_max, |sum u|<=B) y maximiza SRS.
+    Devuelve la misma forma que `dp_optimal`, o `None` si `L**T > max_combos`
+    (no enumerable). Sirve para validar el DP en instancias chicas.
+    """
+    R_obs = np.asarray(R_obs, dtype=float)
+    deltaS = np.asarray(deltaS, dtype=float)
+    T = len(R_obs)
+    if L ** T > max_combos:
+        return None
+    half = (L - 1) // 2
+    ks = range(-half, half + 1)
+
+    best_srs, best_u = -np.inf, None
+    best_infeas_srs, best_infeas_u = -np.inf, None
+    for combo in itertools.product(ks, repeat=T):
+        u = np.array(combo, dtype=float) * delta_u
+        S = st.simulate_storage(S0, deltaS, u)
+        R = R_obs + u
+        feasible = (R >= -tol).all() and (S >= -tol).all() and (S <= S_max + tol).all() \
+            and abs(u.sum()) <= B + tol
+        val = srs.compute_srs(srs.compute_costs(S, u, S_min), weights)
+        if feasible:
+            if val > best_srs:
+                best_srs, best_u = val, u
+        elif val > best_infeas_srs:
+            best_infeas_srs, best_infeas_u = val, u
+
+    if best_u is not None:
+        u_star, srs_val, feasible = best_u, best_srs, True
+    else:                                   # no hay factible: reporta la mejor infactible
+        u_star, srs_val, feasible = best_infeas_u, best_infeas_srs, False
+
+    S = st.simulate_storage(S0, deltaS, u_star)
+    costs = srs.compute_costs(S, u_star, S_min)
     return {"u_star": u_star, "SRS_star": srs_val, "costs": costs, "feasible": bool(feasible)}

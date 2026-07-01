@@ -19,7 +19,7 @@ import falcon_results as res
 import falcon_srs as srs
 import falcon_storage as st
 
-STANDARD_INSTANCES = [(12, 3), (26, 5), (52, 5)]
+STANDARD_INSTANCES = [(5, 3), (12, 3), (26, 5), (52, 5), (52, 7)]
 
 
 def _evaluate(u, S0, dS, S_min, weights):
@@ -46,13 +46,18 @@ def run_instance(df, constants, T: int, L: int) -> None:
     dt_h = time.perf_counter() - t0
     Sh, ch, srs_h = _evaluate(uh, S0, dS_T, S_min, w)
 
-    # 2) Threshold (regla pura del spec)
+    # 2) Threshold pura (fiel al spec) y 3) threshold clamped (variante factible)
     t0 = time.perf_counter()
     ut = bl.threshold_rule(R_T, dS_T, S0, S_min, p["delta_u"])
     dt_t = time.perf_counter() - t0
     Stt, ct, srs_t = _evaluate(ut, S0, dS_T, S_min, w)
 
-    # 3) DP exacto (baseline clasico fuerte / ground truth)
+    t0 = time.perf_counter()
+    uc = bl.threshold_rule(R_T, dS_T, S0, S_min, p["delta_u"], clamp_release=True)
+    dt_c = time.perf_counter() - t0
+    Sc, cc, srs_c = _evaluate(uc, S0, dS_T, S_min, w)
+
+    # 4) DP exacto (baseline clasico fuerte / ground truth)
     t0 = time.perf_counter()
     dp = bl.dp_optimal(R_T, dS_T, S0, S_min=S_min, S_max=S_max,
                        delta_u=p["delta_u"], L=L, weights=w, B=B)
@@ -60,24 +65,41 @@ def run_instance(df, constants, T: int, L: int) -> None:
     u_dp = dp["u_star"]
     Sdp = st.simulate_storage(S0, dS_T, u_dp)
 
-    refs = {"historical": srs_h, "threshold": srs_t, "dp": dp["SRS_star"]}
+    # 5) Brute force (arbitro) si es enumerable
+    t0 = time.perf_counter()
+    bf = bl.brute_force_optimal(R_T, dS_T, S0, S_min=S_min, S_max=S_max,
+                                delta_u=p["delta_u"], L=L, weights=w, B=B)
+    dt_bf = time.perf_counter() - t0
 
+    refs = {"historical": srs_h, "threshold": srs_t, "dp": dp["SRS_star"]}
     common = dict(instance=instance, T=T, L=L, params=p, weights=w,
                   constants=constants, B=B, references=refs)
 
-    res.record_run(method="historical", u=uh, S=Sh, costs=ch, srs=srs_h,
-                   feasibility=st.check_constraints(R_T, uh, Sh, S_max, p["u_max"], B),
-                   runtime_seconds=dt_h, **common)
-    res.record_run(method="threshold", variant="pure", u=ut, S=Stt, costs=ct, srs=srs_t,
-                   feasibility=st.check_constraints(R_T, ut, Stt, S_max, p["u_max"], B),
-                   runtime_seconds=dt_t, **common)
-    res.record_run(method="dp", u=u_dp, S=Sdp, costs=dp["costs"], srs=dp["SRS_star"],
-                   feasibility=st.check_constraints(R_T, u_dp, Sdp, S_max, p["u_max"], B),
-                   runtime_seconds=dt_dp, **common)
+    def chk(u, S):
+        return st.check_constraints(R_T, u, S, S_max, p["u_max"], B)
 
-    print(f"[{instance:7s} T={T:2d} L={L}] "
-          f"hist={srs_h:.4e}  thr={srs_t:.4e} (dSRS {srs_t-srs_h:+.2e})  "
-          f"dp={dp['SRS_star']:.4e} (dSRS {dp['SRS_star']-srs_h:+.2e})")
+    res.record_run(method="historical", u=uh, S=Sh, costs=ch, srs=srs_h,
+                   feasibility=chk(uh, Sh), runtime_seconds=dt_h, **common)
+    res.record_run(method="threshold", variant="pure", u=ut, S=Stt, costs=ct, srs=srs_t,
+                   feasibility=chk(ut, Stt), runtime_seconds=dt_t, **common)
+    res.record_run(method="threshold", variant="clamped", u=uc, S=Sc, costs=cc, srs=srs_c,
+                   feasibility=chk(uc, Sc), runtime_seconds=dt_c, **common)
+    res.record_run(method="dp", u=u_dp, S=Sdp, costs=dp["costs"], srs=dp["SRS_star"],
+                   feasibility=chk(u_dp, Sdp), runtime_seconds=dt_dp, **common)
+
+    bf_txt = "n/a"
+    if bf is not None:
+        Sbf = st.simulate_storage(S0, dS_T, bf["u_star"])
+        res.record_run(method="brute", u=bf["u_star"], S=Sbf, costs=bf["costs"],
+                       srs=bf["SRS_star"], feasibility=chk(bf["u_star"], Sbf),
+                       runtime_seconds=dt_bf, **common)
+        assert abs(bf["SRS_star"] - dp["SRS_star"]) < 1e-9, \
+            f"brute != dp en {instance}: {bf['SRS_star']} vs {dp['SRS_star']}"
+        bf_txt = f"{bf['SRS_star']:.4e} (==dp OK)"
+
+    print(f"[{instance:7s} T={T:2d} L={L}] hist={srs_h:.4e}  thr_pure={srs_t:.4e}  "
+          f"thr_clamp={srs_c:.4e}  dp={dp['SRS_star']:.4e} (dSRS {dp['SRS_star']-srs_h:+.2e})  "
+          f"brute={bf_txt}")
 
 
 def main() -> None:

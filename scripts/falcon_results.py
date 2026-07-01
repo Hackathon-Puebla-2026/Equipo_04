@@ -40,6 +40,8 @@ CSV_COLUMNS = [
 
 def instance_label(T: int, L: int) -> str:
     """Etiqueta estandar de instancia."""
+    if (T, L) == (5, 3):
+        return "debug"
     if (T, L) == (12, 3):
         return "small"
     if (T, L) == (26, 5):

@@ -1,6 +1,6 @@
 {
-  "run_id": "large_T52_L5_dp_20260630-164135",
-  "timestamp": "20260630-164135",
+  "run_id": "large_T52_L5_dp_20260630-190142",
+  "timestamp": "20260630-190142",
   "owner": "",
   "method": "dp",
   "variant": null,
@@ -19,7 +19,7 @@
   "weeks_below_Smin": 53,
   "release_balance_error": 0.0,
   "feasible": true,
-  "runtime_seconds": 0.07942862500203773,
+  "runtime_seconds": 0.0757749589974992,
   "delta_u": 3053171.405289538,
   "u_max": 6106342.810579076,
   "eta": 0.1,
