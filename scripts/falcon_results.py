@@ -36,6 +36,7 @@ CSV_COLUMNS = [
     "encoding", "n_qubits", "p_depth", "energy", "approximation_ratio", "seed",
     "simulator", "penalties",
     "window_start", "window_label",
+    "beta", "gamma", "optimizer_iterations",
 ]
 
 
@@ -136,6 +137,10 @@ def record_run(*, method: str, instance: str, T: int, L: int,
         "seed": solver.get("seed"),
         "simulator": solver.get("simulator"),
         "penalties": solver.get("penalties"),
+        # Campos especificos de QAOA (null si no aplica):
+        "beta": solver.get("beta"),
+        "gamma": solver.get("gamma"),
+        "optimizer_iterations": solver.get("optimizer_iterations"),
         # Ventana temporal (E1; null/"" para corridas de ventana unica start=0):
         "window_start": None if window_start is None else int(window_start),
         "window_label": window_label,

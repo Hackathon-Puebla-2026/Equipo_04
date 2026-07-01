@@ -16,10 +16,12 @@ import falcon_storage as st
 
 
 def _x_from_levels(lv, vi, meta, half):
-    """Construye el bitvector (one-hot + slack de balance optimo) desde indices de nivel."""
+    """Construye el bitvector (bits de decision + slack de balance optimo) desde indices de nivel.
+
+    Los bits de decision se arman con el encoding (one-hot o binary) via `vi.encode_levels`.
+    """
     x = np.zeros(meta["n_qubits"], dtype=float)
-    for t, l in enumerate(lv):
-        x[vi.idx(t, int(l))] = 1.0
+    x[:vi.n] = vi.encode_levels([int(l) for l in lv])
     if meta["n_balance_slack"] > 0:
         M = int(sum(int(l) - half for l in lv))
         s = meta["M_cap"] - M

@@ -56,16 +56,20 @@ def _historical_Jscale(S0, deltaS, S_min, weights, T) -> float:
 
 
 def build_qubo(cfg, R_obs, deltaS, S0: float, *, S_min: float, delta_u: float,
-               levels, weights: dict, B: float) -> tuple[np.ndarray, float, fe.VarIndex, dict]:
-    """Arma (Q, const, var_index, meta) segun cfg. Solo one-hot por ahora."""
-    if cfg.encoding != "onehot":
+               levels, weights: dict, B: float) -> tuple:
+    """Arma (Q, const, var_index, meta) segun cfg. Encodings: one-hot y binary."""
+    if cfg.encoding == "onehot":
+        vi = fe.build_var_index(cfg.T, cfg.L)
+    elif cfg.encoding == "binary":
+        vi = fe.build_binary_var_index(cfg.T, cfg.L)
+    else:
         raise NotImplementedError(f"encoding {cfg.encoding!r} aun no implementado (Fase 2)")
+    is_binary = isinstance(vi, fe.BinaryVarIndex)
     T, L = cfg.T, cfg.L
     half = (L - 1) // 2
     levels = np.asarray(levels, dtype=float)
     R_obs = np.asarray(R_obs, dtype=float)
     w1, w2, w3 = weights["w1"], weights["w2"], weights["w3"]
-    vi = fe.build_var_index(T, L)
     n_dec = vi.n
 
     # --- slack de balance exacto (1 var log-encoded) ---
@@ -112,20 +116,32 @@ def build_qubo(cfg, R_obs, deltaS, S0: float, *, S_min: float, delta_u: float,
     else:
         raise NotImplementedError("c_crit='deficit_slack' (Opcion B) es Fase 2")
 
-    # --- one-hot: P Σ_t (Σ_l x_{t,l} - 1)² ---
-    if cfg.onehot == "penalty":
+    # --- validez del encoding ---
+    n_invalid = 0
+    if not is_binary:
+        # one-hot: P Σ_t (Σ_l x_{t,l} - 1)²
+        if cfg.onehot == "penalty":
+            for t in range(T):
+                expr = {"constant": -1.0, "linear": {vi.idx(t, l): 1.0 for l in range(L)}}
+                const = add_square_of_linear_expression(Q, const, expr, P["onehot"])
+        # xy_mixer: sin penalizacion (se maneja en el mixer del QAOA, Fase 3)
+    else:
+        # binary: penalizar codewords invalidos (l>=L) por semana
         for t in range(T):
-            expr = {"constant": -1.0, "linear": {vi.idx(t, l): 1.0 for l in range(L)}}
-            const = add_square_of_linear_expression(Q, const, expr, P["onehot"])
-    # xy_mixer: sin penalizacion (se maneja en el mixer del QAOA, Fase 3)
+            for l in vi.invalid_levels():
+                const = fe.add_codeword_penalty(Q, const, vi, t, l, P["onehot"])
+                n_invalid += 1
 
-    # --- release no negativo: prohibir niveles con R_obs+a_l<0 (penalizacion lineal) ---
+    # --- release no negativo: prohibir niveles con R_obs+a_l<0 ---
     n_forbidden = 0
     if cfg.release_nonneg == "prohibit":
         for t in range(T):
             for l in range(L):
                 if R_obs[t] + levels[l] < -1e-9:
-                    Q[vi.idx(t, l), vi.idx(t, l)] += P["R"]
+                    if is_binary:
+                        const = fe.add_codeword_penalty(Q, const, vi, t, l, P["R"])
+                    else:
+                        Q[vi.idx(t, l), vi.idx(t, l)] += P["R"]
                     n_forbidden += 1
 
     # --- balance |Σu| ≤ B ---
@@ -135,14 +151,12 @@ def build_qubo(cfg, R_obs, deltaS, S0: float, *, S_min: float, delta_u: float,
             expr = fe.add_exprs(expr, fe.linear_expr_u(t, levels, vi))
         const = add_square_of_linear_expression(Q, const, expr, P["bal_soft"])
     elif cfg.balance == "slack":
-        # M = Σ_t Σ_l k_l x_{t,l} (k_l = l-half, entero). M + s - M_cap = 0.
-        lin = {}
-        for t in range(T):
-            for l in range(L):
-                lin[vi.idx(t, l)] = float(l - half)
+        # M = Σ_t (l_t - half) (entero, agnostico al encoding). M + s - M_cap = 0.
+        Mexpr = fe.balance_M_expr(vi, half)
+        lin = dict(Mexpr["linear"])
         for r, var in enumerate(balance_slack_bits):
             lin[var] = float(2 ** r)
-        expr = {"constant": -float(M_cap), "linear": lin}
+        expr = {"constant": Mexpr["constant"] - float(M_cap), "linear": lin}
         const = add_square_of_linear_expression(Q, const, expr, P["bal_slack"])
 
     # --- normalizacion interna (condicionamiento) ---
@@ -159,8 +173,8 @@ def build_qubo(cfg, R_obs, deltaS, S0: float, *, S_min: float, delta_u: float,
     meta = {
         "n_qubits": n, "n_decision": n_dec, "n_balance_slack": len(balance_slack_bits),
         "encoding": cfg.encoding, "scale": scale, "S_target": S_target,
-        "M_cap": M_cap, "n_forbidden_levels": n_forbidden, "penalties": P,
-        "levels": levels.tolist(),
+        "M_cap": M_cap, "n_forbidden_levels": n_forbidden, "n_invalid_codewords": n_invalid,
+        "penalties": P, "levels": levels.tolist(),
     }
     return Q, const, vi, meta
 
