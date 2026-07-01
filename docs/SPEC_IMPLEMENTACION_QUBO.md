@@ -149,9 +149,10 @@ scripts/
 
 ### Fase 1: el builder QUBO (centro)
 
-- [ ] **`falcon_encodings.py`** (one-hot) :: `build_var_index(T,L)`; `linear_expr_u(t)` (dict
-  `{var: coef}` + const); `linear_expr_storage(t)`. *Done:* `decode → u → re-encode` roundtrip exacto.
-- [ ] **`falcon_qubo.py`** :: `add_square_of_linear_expression(Q, const_ref, expr, weight)`
+- [x] **`falcon_config.py`** :: dataclass `FalconConfig` con defaults decididos (§4). *Done.*
+- [x] **`falcon_encodings.py`** (one-hot) :: `build_var_index(T,L)`; `linear_expr_u(t)` (dict
+  `{var: coef}` + const); `linear_expr_storage(t)`; `add_exprs`/`scale_expr`. *Done:* roundtrip exacto.
+- [x] **`falcon_qubo.py`** :: `add_square_of_linear_expression(Q, const_ref, expr, weight)`
   (`(c+Σaᵢxᵢ)² = c² + Σ(2caᵢ+aᵢ²)xᵢ + 2Σ_{i<j}aᵢaⱼxᵢxⱼ`); `build_qubo(cfg, data) -> (Q, const,
   var_index)`. **Set MVP con los defaults decididos (§4)**: `C_dev + C_smooth + soft-storage C_crit +
   one-hot penalty + release-prohibition P_R`; **`storage_bounds="drop"`** (no se codifica, nunca ata);
@@ -159,13 +160,12 @@ scripts/
   **`balance="slack"` exacto de 1 slack** (`M+s=M_cap`, ~log₂ qubits, preferido). Normalización interna
   (§3); `qubo_energy(Q, x, const)`; `to_quadratic_program(Q)`. *Done:* construye T12/L3 sin error;
   nº vars = `T·L` (+ ~log₂ del slack de balance si exacto); sin slacks de storage.
-- [ ] **Gate de energía** (antes de cualquier QAOA): `xᵀQx + const == costo SRS decodificado` en
-  varias bitstrings (patrón `verify_energy` de Georgia / validadores de emilio). *Done:* |Δ| < tol en
-  ≥5 bitstrings; si falla, revisar signo/escala de `Q`.
-- [ ] **`falcon_solvers.py`** :: `exhaustive(cfg, data)` para T12/L3 (enumera `Lᵀ` factibles);
-  `simulated_annealing(Q, ...)` (reusar neal / filtrado de factibilidad de emilio);
-  `decode_and_verify(samples, ...) -> {best_feasible, feasibility_rate}` (post-selección). *Done:*
-  `exhaustive == dp_optimal` en T12/L3; SA devuelve factible con tasa razonable.
+- [x] **Gate de energía** (`falcon_energy_gate.py`): `xᵀQx·scale + const == J == −SRS` en 9 bitstrings
+  factibles, T12/L3 y T26/L5. *Done:* max |Δ| ~1e-13.
+- [x] **`falcon_solvers.py`** :: `exhaustive_qubo` (vectorizado `X@Q`) para T12/L3; `simulated_annealing_qubo`;
+  `decode_and_verify` (post-selección). *Done:* `exhaustive_qubo == dp` en T12/L3; SA factible en T26/L5
+  (gap ~0.03, heurístico a afinar). Registro en `results/` via `falcon_run_qubo.py`
+  (`qubo_exhaustive`, `qubo_sa`).
 
 ### Fase 2: crecer el modelo (todos los trucos)
 
